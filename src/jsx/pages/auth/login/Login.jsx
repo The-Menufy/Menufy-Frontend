@@ -9,7 +9,6 @@ import GoogleAuth from "./GoogleAuth";
 import ReCAPTCHA from "react-google-recaptcha";
 import { authStore } from "../../../store/authStore";
 import { useState } from "react";
-import FacebookAuth from "./FacebookAuth";
 import { Toast, ToastContainer } from "react-bootstrap";
 import { getDeviceInfo } from "../../../utils/deviceInfo";
 import "./css/login.css";
@@ -230,7 +229,6 @@ function Login() {
                   </button>
                   {/* Social Logins */}
                   <Row xs={1} sm={2} className="g-2 justify-content-center">
-                    <FacebookAuth />
                     <GoogleAuth />
                   </Row>
                 </Stack>
