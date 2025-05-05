@@ -1,0 +1,23 @@
+{
+  "search_placeholder": "Search here...",
+  "see_all_notifications": "See all notifications",
+  "profile": "Profile",
+  "inbox": "Inbox",
+  "user": "User",
+  "dashboard": "Dashboard",
+  "admin": "Admin",
+  "super_admin": "Super Admin",
+  "restaurant": "Restaurant",
+  "ingredients": "Ingredients",
+  "variants": "Variants",
+  "menu_management": "Menu Management",
+  "menu": "Menu",
+  "category": "Category",
+  "product": "Product",
+  "ingredient": "Ingredient",
+  "utensil": "Utensil",
+  "dish_of_the_day": "Dish Of The Day",
+  "statistics": "Statistics",
+  "ask_ai": "Ask Ai",
+  "admin_discussion": "Admin Discussion"
+}

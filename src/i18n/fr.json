@@ -1,0 +1,23 @@
+{
+  "search_placeholder": "Rechercher ici...",
+  "see_all_notifications": "Voir toutes les notifications",
+  "profile": "Profil",
+  "inbox": "Boîte de réception",
+  "user": "Utilisateur",
+  "dashboard": "Tableau de bord",
+  "admin": "Admin",
+  "super_admin": "Super Admin",
+  "restaurant": "Restaurant",
+  "ingredients": "Ingrédients",
+  "variants": "Variantes",
+  "menu_management": "Gestion du menu",
+  "menu": "Menu",
+  "category": "Catégorie",
+  "product": "Produit",
+  "ingredient": "Ingrédient",
+  "utensil": "Ustensile",
+  "dish_of_the_day": "Plat du jour",
+  "statistics": "Statistiques",
+  "ask_ai": "Demander à l'IA",
+  "admin_discussion": "Discussion Admin"
+}
