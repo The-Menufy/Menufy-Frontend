@@ -60,6 +60,15 @@ const Header = () => {
                     <Dropdown.Item onClick={() => changeLanguage("fr")}>
                       FR
                     </Dropdown.Item>
+                    <Dropdown.Item onClick={() => changeLanguage("es")}>
+                      ES
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => changeLanguage("pt")}>
+                      PT
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => changeLanguage("ar")}>
+                      AR
+                    </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
               </li>
