@@ -6,7 +6,7 @@ const useAuthStore = create((set) => ({
   password: "",
   confirmPassword: "",
   goSteps: 0,
-  isAuthenticated: !!localStorage.getItem("token"), 
+  isAuthenticated: !!localStorage.getItem("token"),
 
   setEmail: (email) => set({ email }),
   setVerificationCode: (verificationCode) => set({ verificationCode }),
@@ -20,8 +20,9 @@ const useAuthStore = create((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem("token");
-    set({ isAuthenticated: false });
+    localStorage.clear();
+    sessionStorage.clear();
+    set({ currentUser: null });
   },
 }));
 
