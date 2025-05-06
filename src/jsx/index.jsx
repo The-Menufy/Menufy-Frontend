@@ -8,7 +8,7 @@ import "./step.css";
 import Nav from "./layouts/nav";
 import Footer from "./layouts/Footer";
 /// Dashboard
-import RecipeCostDetails from './components/Dashboard/RecipeCostDetails';
+import RecipeCostDetails from "./components/Dashboard/RecipeCostDetails";
 import Home from "./components/Dashboard/Home";
 import Orders from "./components/Dashboard/Orders";
 import OrderId from "./components/Dashboard/OrderId";
@@ -16,22 +16,20 @@ import GeneralCustomers from "./components/Dashboard/GeneralCustomers";
 import Analytics from "./components/Dashboard/Analytics";
 import Reviews from "./components/Dashboard/Reviews";
 import Task from "./components/Dashboard/Task";
-import Category from './components/Dashboard/Category';
-import Product from './components/Dashboard/Product';
-import Ingredient from './components/Dashboard/ingredtient';
-import Ustensile from './components/Dashboard/Ustensile';
-import DishOfTheDay from './components/Dashboard/DishOfTheDay';
-import Chat from './components/Dashboard/Chat';
-import MenuList from './components/Dashboard/Menus';
+import Category from "./components/Dashboard/Category";
+import Product from "./components/Dashboard/Product";
+import Ingredient from "./components/Dashboard/ingredtient";
+import Ustensile from "./components/Dashboard/Ustensile";
+import DishOfTheDay from "./components/Dashboard/DishOfTheDay";
+import Chat from "./components/Dashboard/Chat";
+import MenuList from "./components/Dashboard/Menus";
 import MealRecommendation from "./components/Dashboard/MealRecommendation";
-import  Recipe  from "./components/Dashboard/Recipe";
+import Recipe from "./components/Dashboard/Recipe";
 import Statistics from "./components/Dashboard/Statistics";
 import AddRecipePage from "./components/Dashboard/AddRecipePage";
 import UpdateRecipePage from "./components/Dashboard/UpdateRecipePage";
-import ManageVariants from "./components/Dashboard/ManageVariants"; 
-import RecommendationComponent from "./components/Dashboard/Recommendation";
-import ClassificationComponent from "./components/Dashboard/Classification";
-import RegressionComponent from "./components/Dashboard/Regression";
+import ManageVariants from "./components/Dashboard/ManageVariants";
+
 //CMS
 import Content from "./components/Cms/Content";
 import Menu from "./components/Cms/Menu";
@@ -119,155 +117,226 @@ import AddIngredient from "./pages/ingredients/AddIngredient";
 import EditIngredient from "./pages/ingredients/EditIngredient";
 import ShowIngredient from "./pages/ingredients/ShowIngredient";
 import ChatBox from "./components/chatBox/ChatBox";
+// client side
+import CategoryPage from "./pages/Home/pages/CategoryPage";
+import ProductPage from "./pages/Home/pages/ProductPage";
+import HomePage from "./pages/Home/pages/homePage";
+import MenuPage from "./pages/Home/pages/Menus";
+import Loginpage from "./pages/Home/pages/login";
+import Reset from "./pages/Home/pages/resetPassword";
+import Register from "./pages/Home/pages/register";
+import ResetPasswordEmail from "./pages/Home/pages/resetPasswordEmail";
+import ProfilePage from "./pages/Home/pages/profilePage";
+import EditProfile from "./pages/Home/pages/editProfile";
+import Settings from "./pages/Home/pages/settingPage";
+import ProtectedRoute from "./pages/Home/components/ProtectedRoute";
+import NavbarUser from "./pages/Home/components/navBar";
+import FooterUser from "./pages/Home/components/footer";
+import VerifyCode from "./pages/Home/pages/VerifyCode";
+import TestQR from "./pages/Home/pages/TestQR";
+import PublicCategoryPage from "./pages/Home/pages/PublicCategoryPage";
+
+// USER LAYOUT for the public-facing home (not admin dashboard)
+const UserLayout = () => {
+  return (
+    <div className="d-flex flex-column min-vh-100 bg-light">
+      <NavbarUser />
+      <main className="flex-grow-1">
+        <Outlet />
+      </main>
+      <FooterUser />
+    </div>
+  );
+};
 
 const Markup = () => {
-	const allroutes = [
-		/// Dashboard
-		{ url: "RecipeCostDetails", component: <RecipeCostDetails /> },
-		{ url: "", component: <Home /> },
-		{ url: "chatbox", component: <ChatBox currentUser="admin1" selectedUser="admin2" /> },
-		{ url: "dashboard", component: <Home /> },
-		{ url: "orders", component: <Orders /> },
-		{ url: "Order-id", component: <OrderId /> },
-		{ url: "general-customers", component: <GeneralCustomers /> },
-		{ url: "analytics", component: <Analytics /> },
-		{ url: "review", component: <Reviews /> },
-		{ url: "task", component: <Task /> },
-		{ url: 'category', component: <Category /> },
-        { url: 'product', component: <Product /> },
-        { url: 'ingredient', component: <Ingredient /> },
-		{ url: 'Ustensile', component: <Ustensile /> },
-        { url: 'DishOfTheDay', component: <DishOfTheDay /> },
-		{ url: 'Chat', component: <Chat /> },
-		{ url: 'MenuList', component: <MenuList /> },
-		{ url: 'MealRecommendation', component: <MealRecommendation /> },
-		{ url: 'Recipe/:id', component: <Recipe /> },
-		{ url: 'Statistics', component: <Statistics /> },
-		{ url: "recipe/:recipeId/cost", component: <RecipeCostDetails /> },
-		{ url: "add-recipe", component: <AddRecipePage /> },
-		{ url: "update-recipe/:id", component: <UpdateRecipePage /> },	
-		{ url: "manage-variants", component: <ManageVariants /> },
-		{ url: "classification", component: <ClassificationComponent /> },  // Route for Classification
-		{ url: "regression", component: <RegressionComponent /> },  // Route for Regression
-		{ url: "recommendation", component: <RecommendationComponent /> },
-		//Cms
-		{ url: "content", component: <Content /> },
-		{ url: "menu", component: <Menu /> },
-		{ url: "email-template", component: <EmailTemplate /> },
-		{ url: "blog", component: <Blog /> },
-		{ url: "add-content", component: <ContentAdd /> },
-		{ url: "add-email", component: <AddMail /> },
-		{ url: "add-blog", component: <AddBlog /> },
-		{ url: "blog-category", component: <BlogCategory /> },
-		/// Apps
-		{ url: "app-profile", component: <AppProfile /> },
-		{ url: "post-details", component: <PostDetails /> },
-		{ url: "email-compose", component: <Compose /> },
-		{ url: "email-inbox", component: <Inbox /> },
-		{ url: "email-read", component: <Read /> },
-		{ url: "app-calender", component: <Calendar /> },
-		/// Chart
-		{ url: "chart-sparkline", component: <SparklineChart /> },
-		{ url: "chart-chartjs", component: <ChartJs /> },
-		{ url: "chart-apexchart", component: <ApexChart /> },
-		{ url: "chart-rechart", component: <RechartJs /> },
-		/// Bootstrap
-		{ url: "ui-alert", component: <UiAlert /> },
-		{ url: "ui-badge", component: <UiBadge /> },
-		{ url: "ui-button", component: <UiButton /> },
-		{ url: "ui-modal", component: <UiModal /> },
-		{ url: "ui-button-group", component: <UiButtonGroup /> },
-		{ url: "ui-accordion", component: <UiAccordion /> },
-		{ url: "ui-list-group", component: <UiListGroup /> },
-		{ url: "ui-card", component: <UiCards /> },
-		{ url: "ui-carousel", component: <UiCarousel /> },
-		{ url: "ui-dropdown", component: <UiDropDown /> },
-		{ url: "ui-popover", component: <UiPopOver /> },
-		{ url: "ui-progressbar", component: <UiProgressBar /> },
-		{ url: "ui-tab", component: <UiTab /> },
-		{ url: "ui-pagination", component: <UiPagination /> },
-		{ url: "ui-typography", component: <UiTypography /> },
-		{ url: "ui-grid", component: <UiGrid /> },
-		/// Plugin
-		{ url: "uc-select2", component: <Select2 /> },
-		{ url: "uc-nestable", component: <Nestable /> },
-		{ url: "uc-sweetalert", component: <MainSweetAlert /> },
-		{ url: "uc-noui-slider", component: <MainNouiSlider /> },
-		{ url: "uc-toastr", component: <Toastr /> },
-		{ url: "uc-lightgallery", component: <Lightgallery /> },
-		/// Widget
-		{ url: "widget-basic", component: <Widget /> },
-		/// Shop
-		{ url: "ecom-product-grid", component: <ProductGrid /> },
-		{ url: "ecom-product-list", component: <ProductList /> },
-		{ url: "ecom-product-detail", component: <ProductDetail /> },
-		{ url: "ecom-product-order", component: <ProductOrder /> },
-		{ url: "ecom-checkout", component: <Checkout /> },
-		{ url: "ecom-invoice", component: <Invoice /> },
-		{ url: "ecom-product-detail", component: <ProductDetail /> },
-		{ url: "ecom-customers", component: <EcomCustomers /> },
-		/// Form
-		{ url: "form-element", component: <Element /> },
-		{ url: "form-wizard", component: <Wizard /> },
-		{ url: "form-ckeditor", component: <CkEditor /> },
-		{ url: "form-pickers", component: <Pickers /> },
-		{ url: "form-validation", component: <FormValidation /> },
-		/// table
-		{ url: "table-datatable-basic", component: <DataTable /> },
-		{ url: "table-bootstrap-basic", component: <BootstrapTable /> },
-		{ url: "table-filtering", component: <FilteringTable /> },
-		{ url: "table-sorting", component: <SortingTable /> },
-		/// pages
-		{ url: "todo", component: <Todo /> },
-		{ url: "test", component: <Test /> },
-		{ url: "profile", component: <Profile /> },
-		{ url: "SuperAdmin", component: <SuperDb /> },
-		{ url: "Archived", component: <ArchivedSup /> },
-		{ url: "Resto", component: <RestoDb /> },
-		{ url: "ingredients", component: <Ingredients /> },
-		{ url: "ingredients/add", component: <AddIngredient /> },
-		{ url: "ingredients/edit/:id", component: <EditIngredient /> },
-		{ url: "ingredients/:id", component: <ShowIngredient /> },
-	];
-	return (
-		<>
-			<AuthRouting />
-			<Routes>
-				<Route path="page-lock-screen" element={<LockScreen />} />
-				<Route path="page-error-400" element={<Error400 />} />
-				<Route path="page-error-403" element={<Error403 />} />
-				<Route path="page-error-404" element={<Error404 />} />
-				<Route path="page-error-500" element={<Error500 />} />
-				<Route path="page-error-503" element={<Error503 />} />
-				<Route element={<MainLayout />}>
-					{allroutes.map((data, i) => (
-						<Route key={i} exact path={`${data.url}`} element={data.component} />
-					))}
-				</Route>
-			</Routes>
-			<ScrollToTop />
-		</>
-	);
+  const allroutes = [
+    { url: "RecipeCostDetails", component: <RecipeCostDetails /> },
+    { url: "", component: <Home /> },
+    {
+      url: "chatbox",
+      component: <ChatBox currentUser="admin1" selectedUser="admin2" />,
+    },
+    { url: "dashboard", component: <Home /> },
+    { url: "orders", component: <Orders /> },
+    { url: "Order-id", component: <OrderId /> },
+    { url: "general-customers", component: <GeneralCustomers /> },
+    { url: "analytics", component: <Analytics /> },
+    { url: "review", component: <Reviews /> },
+    { url: "task", component: <Task /> },
+    { url: "category", component: <Category /> },
+    { url: "product", component: <Product /> },
+    { url: "ingredient", component: <Ingredient /> },
+    { url: "Ustensile", component: <Ustensile /> },
+    { url: "DishOfTheDay", component: <DishOfTheDay /> },
+    { url: "Chat", component: <Chat /> },
+    { url: "MenuList", component: <MenuList /> },
+    { url: "MealRecommendation", component: <MealRecommendation /> },
+    { url: "Recipe/:id", component: <Recipe /> },
+    { url: "Statistics", component: <Statistics /> },
+    { url: "recipe/:recipeId/cost", component: <RecipeCostDetails /> },
+    { url: "add-recipe", component: <AddRecipePage /> },
+    { url: "update-recipe/:id", component: <UpdateRecipePage /> },
+    { url: "manage-variants", component: <ManageVariants /> },
+    //Cms
+    { url: "content", component: <Content /> },
+    { url: "menu", component: <Menu /> },
+    { url: "email-template", component: <EmailTemplate /> },
+    { url: "blog", component: <Blog /> },
+    { url: "add-content", component: <ContentAdd /> },
+    { url: "add-email", component: <AddMail /> },
+    { url: "add-blog", component: <AddBlog /> },
+    { url: "blog-category", component: <BlogCategory /> },
+    /// Apps
+    { url: "app-profile", component: <AppProfile /> },
+    { url: "post-details", component: <PostDetails /> },
+    { url: "email-compose", component: <Compose /> },
+    { url: "email-inbox", component: <Inbox /> },
+    { url: "email-read", component: <Read /> },
+    { url: "app-calender", component: <Calendar /> },
+    /// Chart
+    { url: "chart-sparkline", component: <SparklineChart /> },
+    { url: "chart-chartjs", component: <ChartJs /> },
+    { url: "chart-apexchart", component: <ApexChart /> },
+    { url: "chart-rechart", component: <RechartJs /> },
+    /// Bootstrap
+    { url: "ui-alert", component: <UiAlert /> },
+    { url: "ui-badge", component: <UiBadge /> },
+    { url: "ui-button", component: <UiButton /> },
+    { url: "ui-modal", component: <UiModal /> },
+    { url: "ui-button-group", component: <UiButtonGroup /> },
+    { url: "ui-accordion", component: <UiAccordion /> },
+    { url: "ui-list-group", component: <UiListGroup /> },
+    { url: "ui-card", component: <UiCards /> },
+    { url: "ui-carousel", component: <UiCarousel /> },
+    { url: "ui-dropdown", component: <UiDropDown /> },
+    { url: "ui-popover", component: <UiPopOver /> },
+    { url: "ui-progressbar", component: <UiProgressBar /> },
+    { url: "ui-tab", component: <UiTab /> },
+    { url: "ui-pagination", component: <UiPagination /> },
+    { url: "ui-typography", component: <UiTypography /> },
+    { url: "ui-grid", component: <UiGrid /> },
+    /// Plugin
+    { url: "uc-select2", component: <Select2 /> },
+    { url: "uc-nestable", component: <Nestable /> },
+    { url: "uc-sweetalert", component: <MainSweetAlert /> },
+    { url: "uc-noui-slider", component: <MainNouiSlider /> },
+    { url: "uc-toastr", component: <Toastr /> },
+    { url: "uc-lightgallery", component: <Lightgallery /> },
+    /// Widget
+    { url: "widget-basic", component: <Widget /> },
+    /// Shop
+    { url: "ecom-product-grid", component: <ProductGrid /> },
+    { url: "ecom-product-list", component: <ProductList /> },
+    { url: "ecom-product-detail", component: <ProductDetail /> },
+    { url: "ecom-product-order", component: <ProductOrder /> },
+    { url: "ecom-checkout", component: <Checkout /> },
+    { url: "ecom-invoice", component: <Invoice /> },
+    { url: "ecom-product-detail", component: <ProductDetail /> },
+    { url: "ecom-customers", component: <EcomCustomers /> },
+    /// Form
+    { url: "form-element", component: <Element /> },
+    { url: "form-wizard", component: <Wizard /> },
+    { url: "form-ckeditor", component: <CkEditor /> },
+    { url: "form-pickers", component: <Pickers /> },
+    { url: "form-validation", component: <FormValidation /> },
+    /// table
+    { url: "table-datatable-basic", component: <DataTable /> },
+    { url: "table-bootstrap-basic", component: <BootstrapTable /> },
+    { url: "table-filtering", component: <FilteringTable /> },
+    { url: "table-sorting", component: <SortingTable /> },
+    /// pages
+    { url: "todo", component: <Todo /> },
+    { url: "test", component: <Test /> },
+    { url: "profile", component: <Profile /> },
+    { url: "SuperAdmin", component: <SuperDb /> },
+    { url: "Archived", component: <ArchivedSup /> },
+    { url: "Resto", component: <RestoDb /> },
+    { url: "ingredients", component: <Ingredients /> },
+    { url: "ingredients/add", component: <AddIngredient /> },
+    { url: "ingredients/edit/:id", component: <EditIngredient /> },
+    { url: "ingredients/:id", component: <ShowIngredient /> },
+  ];
+
+  return (
+    <>
+      <AuthRouting />
+      <Routes>
+        {/* Error Pages */}
+        <Route path="page-lock-screen" element={<LockScreen />} />
+        <Route path="page-error-400" element={<Error400 />} />
+        <Route path="page-error-403" element={<Error403 />} />
+        <Route path="page-error-404" element={<Error404 />} />
+        <Route path="page-error-500" element={<Error500 />} />
+        <Route path="page-error-503" element={<Error503 />} />
+
+        {/* ADMIN DASHBOARD & ALL OTHERS */}
+        <Route element={<MainLayout />}>
+          {allroutes.map((data, i) => (
+            <Route key={i} exact path={data.url} element={data.component} />
+          ))}
+          {/* Client/Website-only routes that should use the admin layout */}
+          <Route path="/category/:menuId" element={<CategoryPage />} />
+          <Route path="/products/:categoryId" element={<ProductPage />} />
+          <Route path="/Loginpage" element={<Loginpage />} />
+          <Route path="/Register" element={<Register />} />
+          <Route path="/Reset" element={<Reset />} />
+          <Route path="/ResetPasswordEmail" element={<ResetPasswordEmail />} />
+          <Route path="/ProfilePage" element={<ProfilePage />} />
+          <Route path="/EditProfile" element={<EditProfile />} />
+          <Route path="/Settings" element={<Settings />} />
+          <Route path="/code" element={<VerifyCode />} />
+          <Route path="/testqr" element={<TestQR />} />
+          <Route path="/public/menu/:menuId" element={<PublicCategoryPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                {/* <AdminDashboard /> */}
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/superadmin"
+            element={
+              <ProtectedRoute requiredRole="superadmin">
+                {/* <SuperAdminPanel /> */}
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+        {/* USER HOME: separate layout for / (and optionally other public pages) */}
+        <Route element={<UserLayout />}>
+          <Route path="/homepage" element={<HomePage />} />
+          <Route path="/MenuPage" element={<MenuPage />} />
+          {/* You can add more public routes here if you want them to use UserLayout */}
+          {/* <Route path="/about" element={<AboutPage />} /> */}
+        </Route>
+      </Routes>
+      <ScrollToTop />
+    </>
+  );
 };
+
 function MainLayout() {
-	// const { menuToggle } = useContext(ThemeContext);
-	return (
-		<div
-			id="main-wrapper"
-			// className={`show ${ menuToggle ? "menu-toggle" : ""}`}
-			className="show"
-		>
-			<Nav />
-			<div
-				className="content-body"
-				style={{ minHeight: window.screen.height - 45 }}
-			>
-				<div className="container-fluid">
-					<Outlet />
-				</div>
-			</div>
-			<Footer />
-		</div>
-	);
+  // const { menuToggle } = useContext(ThemeContext);
+  return (
+    <div
+      id="main-wrapper"
+      // className={`show ${ menuToggle ? "menu-toggle" : ""}`}
+      className="show"
+    >
+      <Nav />
+      <div
+        className="content-body"
+        style={{ minHeight: window.screen.height - 45 }}
+      >
+        <div className="container-fluid">
+          <Outlet />
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
 }
 export default Markup;
