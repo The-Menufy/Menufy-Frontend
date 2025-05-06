@@ -64,5 +64,8 @@
   "month": "Mois",
   "day": "Jour",
   "week": "Semaine",
-  "year": "Année"
+  "year": "Année",
+  "Recommendation": "Recommandation",
+  "Regression": "Régression",
+  "Classification": "Classification"
 }
