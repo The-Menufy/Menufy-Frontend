@@ -11,7 +11,7 @@ const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID; // Replace with your Goo
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter basename="/vite/demo">
+    <BrowserRouter basename="/">
       <ThemeContext>
         <GoogleOAuthProvider clientId={clientId}>
           <ToastContainer />
