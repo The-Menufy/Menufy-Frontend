@@ -29,6 +29,9 @@ import Statistics from "./components/Dashboard/Statistics";
 import AddRecipePage from "./components/Dashboard/AddRecipePage";
 import UpdateRecipePage from "./components/Dashboard/UpdateRecipePage";
 import ManageVariants from "./components/Dashboard/ManageVariants";
+ import RecommendationComponent from "./components/Dashboard/Recommendation";
+ import ClassificationComponent from "./components/Dashboard/Classification";
+ import RegressionComponent from "./components/Dashboard/Regression";
 
 //CMS
 import Content from "./components/Cms/Content";
@@ -178,6 +181,9 @@ const Markup = () => {
     { url: "add-recipe", component: <AddRecipePage /> },
     { url: "update-recipe/:id", component: <UpdateRecipePage /> },
     { url: "manage-variants", component: <ManageVariants /> },
+    { url: "classification", component: <ClassificationComponent /> },  // Route for Classification
+ 		{ url: "regression", component: <RegressionComponent /> },  // Route for Regression
+ 		{ url: "recommendation", component: <RecommendationComponent /> },
     //Cms
     { url: "content", component: <Content /> },
     { url: "menu", component: <Menu /> },
