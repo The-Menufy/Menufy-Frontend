@@ -42,9 +42,18 @@ const ManageVariants = () => {
       if (!response.ok)
         throw new Error(`Failed to fetch variants: ${response.statusText}`);
       const data = await response.json();
-      setVariants(Array.isArray(data) ? data : []);
-    } catch {
+      // Ensure isArchived is defined, default to false if missing
+      const normalizedData = Array.isArray(data)
+        ? data.map((variant) => ({
+            ...variant,
+            isArchived: variant.isArchived ?? false,
+          }))
+        : [];
+      setVariants(normalizedData);
+    } catch (error) {
+      console.error("Error fetching variants:", error.message);
       setVariants([]);
+      alert(`Error fetching variants: ${error.message}`);
     }
   };
 
@@ -58,9 +67,7 @@ const ManageVariants = () => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("name", newVariant.name);
-    formData.append("portions", JSON.stringify(newVariant.portions));
-    formData.append("modifiedIngredientsGroup", JSON.stringify([]));
-    formData.append("modifiedSteps", JSON.stringify([]));
+    formData.append("portions", newVariant.portions.join(","));
     formData.append("note", newVariant.note);
     if (newVariant.images.length > 0) {
       formData.append("photo", newVariant.images[0]);
@@ -71,8 +78,10 @@ const ManageVariants = () => {
         method: "POST",
         body: formData,
       });
-      if (!response.ok)
-        throw new Error(`Failed to add variant: ${response.statusText}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to add variant: ${response.statusText}`);
+      }
       setShowAddModal(false);
       setNewVariant({
         name: "",
@@ -81,8 +90,10 @@ const ManageVariants = () => {
         images: [],
       });
       await fetchVariants();
-    } catch {
-      // handle error (could show notification)
+      alert("Variant added successfully!");
+    } catch (error) {
+      console.error("Error adding variant:", error.message);
+      alert(`Error adding variant: ${error.message}`);
     }
   };
 
@@ -93,9 +104,7 @@ const ManageVariants = () => {
 
     const formData = new FormData();
     formData.append("name", selectedVariant.name);
-    formData.append("portions", JSON.stringify(selectedVariant.portions));
-    formData.append("modifiedIngredientsGroup", JSON.stringify([]));
-    formData.append("modifiedSteps", JSON.stringify([]));
+    formData.append("portions", selectedVariant.portions.join(","));
     formData.append("note", selectedVariant.note);
 
     if (
@@ -113,13 +122,17 @@ const ManageVariants = () => {
           body: formData,
         }
       );
-      if (!response.ok)
-        throw new Error(`Failed to update variant: ${response.statusText}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to update variant: ${response.statusText}`);
+      }
       setShowEditModal(false);
       setSelectedVariant(null);
       await fetchVariants();
-    } catch {
-      // handle error
+      alert("Variant updated successfully!");
+    } catch (error) {
+      console.error("Error updating variant:", error.message);
+      alert(`Error updating variant: ${error.message}`);
     }
   };
 
@@ -130,13 +143,26 @@ const ManageVariants = () => {
         const response = await fetch(`${BACKEND}/api/recipe-variants/${id}`, {
           method: "DELETE",
         });
-        if (!response.ok)
-          throw new Error(`Failed to delete variant: ${response.statusText}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to delete variant: ${response.statusText}`);
+        }
         await fetchVariants();
-        const totalPages = Math.ceil(filteredVariants.length / itemsPerPage);
-        if (currentPage > totalPages) setCurrentPage(totalPages || 1);
-      } catch {
-        // handle error
+        // Recalculate total pages after state update
+        const updatedVariants = variants.filter((v) => v._id !== id);
+        const filteredUpdatedVariants = updatedVariants.filter((variant) =>
+          showArchived ? variant.isArchived : !variant.isArchived
+        );
+        const totalPages = Math.ceil(filteredUpdatedVariants.length / itemsPerPage);
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        } else if (totalPages === 0) {
+          setCurrentPage(1);
+        }
+        alert("Variant deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting variant:", error.message);
+        alert(`Error deleting variant: ${error.message}`);
       }
     }
   };
@@ -151,11 +177,15 @@ const ManageVariants = () => {
             method: "PUT",
           }
         );
-        if (!response.ok)
-          throw new Error(`Failed to archive variant: ${response.statusText}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to archive variant: ${response.statusText}`);
+        }
         await fetchVariants();
-      } catch {
-        // handle error
+        alert("Variant archived successfully!");
+      } catch (error) {
+        console.error("Error archiving variant:", error.message);
+        alert(`Error archiving variant: ${error.message}`);
       }
     }
   };
@@ -170,11 +200,15 @@ const ManageVariants = () => {
             method: "PUT",
           }
         );
-        if (!response.ok)
-          throw new Error(`Failed to restore variant: ${response.statusText}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to restore variant: ${response.statusText}`);
+        }
         await fetchVariants();
-      } catch {
-        // handle error
+        alert("Variant restored successfully!");
+      } catch (error) {
+        console.error("Error restoring variant:", error.message);
+        alert(`Error restoring variant: ${error.message}`);
       }
     }
   };
@@ -457,6 +491,21 @@ const ManageVariants = () => {
                   setNewVariant({ ...newVariant, images: [e.target.files[0]] })
                 }
               />
+              {newVariant.images.length > 0 && newVariant.images[0] instanceof File && (
+                <div className="mt-2">
+                  <strong>Selected Image Preview:</strong>
+                  <img
+                    src={URL.createObjectURL(newVariant.images[0])}
+                    alt="Preview"
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      objectFit: "cover",
+                      marginTop: "10px",
+                    }}
+                  />
+                </div>
+              )}
             </Form.Group>
 
             <Modal.Footer>
@@ -627,6 +676,22 @@ const ManageVariants = () => {
                     })
                   }
                 />
+                {selectedVariant.images.length > 0 &&
+                  selectedVariant.images[0] instanceof File && (
+                    <div className="mt-2">
+                      <strong>New Image Preview:</strong>
+                      <img
+                        src={URL.createObjectURL(selectedVariant.images[0])}
+                        alt="Preview"
+                        style={{
+                          width: "100px",
+                          height: "100px",
+                          objectFit: "cover",
+                          marginTop: "10px",
+                        }}
+                      />
+                    </div>
+                  )}
               </Form.Group>
 
               <Modal.Footer>
