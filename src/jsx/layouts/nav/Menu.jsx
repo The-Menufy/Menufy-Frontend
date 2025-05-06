@@ -11,6 +11,18 @@ export const MenuList = [
       { title: "restaurant", to: "Resto" },
       { title: "ingredients", to: "ingredients" },
       { title: "variants", to: "/manage-variants" },
+      {
+        title:"Classification",
+        to: "/classification",  // Update this route to the correct one
+      },
+      {
+        title:"Regression",
+        to: "/regression",  // Update this route to the correct one
+      },
+      {
+        title:"Recommendation",
+        to: "/recommendation",  // Update this route to the correct one
+      }
     ],
   },
   // Apps
@@ -29,6 +41,18 @@ export const MenuList = [
       { title: "ask_ai", to: "Chat" },
       { title: "admin_discussion", to: "chatbox" },
       { title: "variants", to: "/manage-variants" },
+      {
+        title:"Classification",
+        to: "/classification",  // Update this route to the correct one
+      },
+      {
+        title:"Regression",
+        to: "/regression",  // Update this route to the correct one
+      },
+      {
+        title:"Recommendation",
+        to: "/recommendation",  // Update this route to the correct one
+      }
     ],
   },
 ];
