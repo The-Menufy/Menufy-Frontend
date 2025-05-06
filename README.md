@@ -89,4 +89,3 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 ## 📬 Contact
 
 - Organization: [The-Menufy](https://github.com/The-Menufy)
-- Email: [contact@the-menufy.com](mailto:contact@the-menufy.com)
