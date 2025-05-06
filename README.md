@@ -1,139 +1,91 @@
-# ThemenufyEspritPITwin2025-Menu-Managment-backend-app
+# Menufy Frontend
 
-A modern, full-stack restaurant and menu management platform for The Menufy Esprit PI Twin 2025 project.  
-This repository contains both **frontend** and **backend** components in a monorepo structure.
-
----
-
-## 🗂️ Project Structure
-
-```
-.
-├── .env                  # Example environment config (edit for your local settings)
-├── .gitignore
-├── eslint.config.js
-├── index.html
-├── node_modules/
-├── package.json          # Root package (mostly for scripts)
-├── package-lock.json
-├── pnpm-lock.yaml
-├── PI/                   # (Optional: describe if used)
-├── public/               # Static assets
-├── README.md             # This file
-├── src/                  # Frontend source code (React, Zustand, etc.)
-├── the-menufy-backend/   # Backend (Express.js, MongoDB)
-└── vite.config.js
-```
-
-- **src/**: Frontend React application  
-- **the-menufy-backend/**: Express.js REST API backend  
-- **public/**: Static assets for frontend  
-- **.env**: Environment variables (copy `.env.example` and modify as needed)
+Welcome to the **Menufy-Frontend** repository! This project is the React (Vite) based user interface for The-Menufy platform, dedicated to modernizing restaurant and menu management.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Tech Stack
 
-### 1. **Clone the Repository**
+- **Framework:** [React](https://react.dev/) (bootstrapped with [Vite](https://vitejs.dev/))
+- **State Management:** (e.g., Context API)
+- **Internationalization:** Custom i18n setup
+- **Styling:** (Add details if you use Tailwind, CSS Modules, etc.)
+- **API:** Communicates with [Menufy Backend](https://github.com/The-Menufy/Menufy-Backend)
 
-```bash
-git clone https://github.com/your-org/ThemenufyEspritPITwin2025-Menu-Managment-backend-app.git
-cd ThemenufyEspritPITwin2025-Menu-Managment-backend-app
+---
+
+## 🗂️ `src` Directory Structure
+
+```
+src/
+│
+├── assets/      # Images, fonts, and other static resources
+├── context/     # React Contexts for global state management
+├── i18n/        # Internationalization (i18n) files
+├── jsx/         # Reusable JSX components
+│
+├── api.js       # API calls and configuration
+├── App.jsx      # Main App component
+├── main.jsx     # Entry point for React/Vite
 ```
 
-### 2. **Install Dependencies**
+---
 
-Install for both frontend and backend (run these in the root and backend folders):
+## 🛠️ Getting Started
 
-```bash
-npm install --force
-cd the-menufy-backend
-npm install --force
-cd ..
-```
+### Prerequisites
 
-> If using `pnpm`, run `pnpm install` instead.
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
-### 3. **Environment Variables**
+### Installation
 
-- Copy `.env` and adapt it with your local settings (MongoDB URI, JWT secrets, etc.).
-- Backend expects its own `.env` file inside `the-menufy-backend/`.
-
-### 4. **Run the Backend**
+Clone the repo and install dependencies:
 
 ```bash
-cd the-menufy-backend
-npm run dev      # For development with hot reload
+git clone https://github.com/The-Menufy/Menufy-Frontend.git
+cd Menufy-Frontend
+npm install
 # or
-npm start        # For production
+yarn install
 ```
 
-### 5. **Run the Frontend**
+### Running the Development Server
 
 ```bash
 npm run dev
+# or
+yarn dev
+```
+
+The app will be live at [http://localhost:5173](http://localhost:5173) by default.
+
+### Building for Production
+
+```bash
+npm run build
+# or
+yarn build
 ```
 
 ---
 
-## ⚙️ Main Features
+## 🤝 Contributors
 
-- User authentication (JWT, Google, Facebook, device verification)
-- Restaurant and menu management (admins, menu items, variants)
-- Role-based access (admin, user)
-- Zustand store for frontend state management
-- RESTful API (OpenAPI/Swagger documented)
-- Device management, secure login/logout
-- Responsive React Bootstrap UI
+- [@FadiAmori](https://github.com/FadiAmori) - Fadi Amorri  
+- [@farsbrayek3](https://github.com/farsbrayek3) - Fares Brayek  
+- [@MasarraCherif](https://github.com/MasarraCherif) - Masarra Cherif  
+- [@mohamedazizmoumni](https://github.com/mohamedazizmoumni) - Mohamed Aziz Moumni  
+- [@sara-bouazzi](https://github.com/sara-bouazzi) - Sara Bouazzi  
 
 ---
 
-## 📖 Scripts
+## 📄 License
 
-At project root and in `the-menufy-backend/` you will find:
-
-| Script         | Description                     |
-|----------------|--------------------------------|
-| `npm run dev`  | Start frontend/backend in dev   |
-| `npm start`    | Start backend in production     |
-| `npm install`  | Install dependencies            |
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 ---
 
-## 🧑‍💻 Development Notes
+## 📬 Contact
 
-- **Frontend**: React, Zustand, React Hook Form, Bootstrap, SweetAlert2, ReCAPTCHA, etc.
-- **Backend**: Express.js, MongoDB (Mongoose), JWT, bcrypt, RESTful conventions.
-- **API Docs**: Swagger JSDoc comments available in backend source.
-
----
-
-## 📝 Contributing
-
-1. Fork and clone the repo
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit and push
-4. Open a pull request!
-
----
-
-## 🙋 FAQ
-
-- **Q:** I get an error about missing dependencies?  
-  **A:** Use `npm install --force` in both root and backend folders.
-
-- **Q:** How do I connect to MongoDB?  
-  **A:** Update your `.env` files with correct connection strings.
-
-- **Q:** Where is the backend API?  
-  **A:** All backend code is in `the-menufy-backend/` and usually runs on port 5000.
-
----
-
-## 🏷️ License
-
-MIT (c) 2025 The Menufy Esprit PI Twin Team
-
----
-
-> _Happy coding!_
+- Organization: [The-Menufy](https://github.com/The-Menufy)
