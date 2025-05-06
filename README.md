@@ -1,4 +1,4 @@
-# ThemenufyEspritPITwin2025-Menu-Managment-backend-app
+# The Menufy
 
 A modern, full-stack restaurant and menu management platform for The Menufy Esprit PI Twin 2025 project.  
 This repository contains both **frontend** and **backend** components in a monorepo structure.
