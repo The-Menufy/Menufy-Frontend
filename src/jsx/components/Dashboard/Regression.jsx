@@ -11,6 +11,7 @@ const RegressionComponent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     const numIngredients = parseInt(features.numIngredients);
     const prepTime = parseInt(features.prepTime);
     const cookTime = parseInt(features.cookTime);
@@ -18,6 +19,13 @@ const RegressionComponent = () => {
 
     if (isNaN(numIngredients) || isNaN(prepTime) || isNaN(cookTime) || isNaN(averageCalorie)) {
       setError('All fields must be valid numbers');
+      setCalories(null);
+      setMatchingDishes([]);
+      return;
+    }
+
+    if (numIngredients <= 0 || prepTime < 0 || cookTime < 0 || averageCalorie < 0) {
+      setError('Values must be positive. Ingredients cannot be less than 1.');
       setCalories(null);
       setMatchingDishes([]);
       return;
@@ -40,8 +48,12 @@ const RegressionComponent = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Typography variant="h4" align="center" color="primary" gutterBottom>
+    <Box sx={{ padding: '40px 20px', minHeight: '100vh', backgroundColor: '#F9F9F9' }}>
+      <Typography
+        variant="h4"
+        align="center"
+        sx={{ color: '#F48FB1', fontWeight: 'bold', mb: 4, fontFamily: 'Poppins, sans-serif' }}
+      >
         Calorie Prediction
       </Typography>
 
@@ -58,6 +70,14 @@ const RegressionComponent = () => {
               fullWidth
               error={!!error}
               helperText={error}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '15px',
+                  padding: '12px',
+                  '& fieldset': { borderColor: '#F48FB1' },
+                  '&:hover fieldset': { borderColor: '#F06292' },
+                },
+              }}
             />
             <TextField
               label="Preparation Time (minutes)"
@@ -68,6 +88,14 @@ const RegressionComponent = () => {
               fullWidth
               error={!!error}
               helperText={error}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '15px',
+                  padding: '12px',
+                  '& fieldset': { borderColor: '#F48FB1' },
+                  '&:hover fieldset': { borderColor: '#F06292' },
+                },
+              }}
             />
             <TextField
               label="Cooking Time (minutes)"
@@ -78,6 +106,14 @@ const RegressionComponent = () => {
               fullWidth
               error={!!error}
               helperText={error}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '15px',
+                  padding: '12px',
+                  '& fieldset': { borderColor: '#F48FB1' },
+                  '&:hover fieldset': { borderColor: '#F06292' },
+                },
+              }}
             />
             <TextField
               label="Average Calorie Per Ingredient"
@@ -88,8 +124,30 @@ const RegressionComponent = () => {
               fullWidth
               error={!!error}
               helperText={error}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '15px',
+                  padding: '12px',
+                  '& fieldset': { borderColor: '#F48FB1' },
+                  '&:hover fieldset': { borderColor: '#F06292' },
+                },
+              }}
             />
-            <Button variant="contained" color="primary" type="submit">
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              sx={{
+                backgroundColor: '#F48FB1',
+                color: '#fff',
+                borderRadius: '30px',
+                padding: '12px 24px',
+                textTransform: 'none',
+                fontWeight: 'bold',
+                boxShadow: '0px 4px 10px rgba(0,0,0,0.2)',
+                '&:hover': { backgroundColor: '#F06292' },
+              }}
+            >
               Predict Calories
             </Button>
           </form>
@@ -140,7 +198,7 @@ const RegressionComponent = () => {
           {error}
         </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

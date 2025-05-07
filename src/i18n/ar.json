@@ -64,5 +64,8 @@
   "month": "شهر",
   "day": "يوم",
   "week": "أسبوع",
-  "year": "سنة"
+  "year": "سنة",
+  "Classification": "التصنيف",
+  "Regression": "الانحدار",
+  "Recommendation": "التوصية"
 }
