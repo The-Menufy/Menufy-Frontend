@@ -34,6 +34,7 @@ import ManageVariants from "./components/Dashboard/ManageVariants";
  import RegressionComponent from "./components/Dashboard/Regression";
 import AiPanel from "./components/Dashboard/AIPanel";
 import Stock from "./components/Dashboard/Stock";
+import Clustering from "./components/Dashboard/Clustering";
 //CMS
 import Content from "./components/Cms/Content";
 import Menu from "./components/Cms/Menu";
@@ -187,7 +188,7 @@ const Markup = () => {
  		{ url: "recommendation", component: <RecommendationComponent /> },
     {url:"AiPanel",component:<AiPanel/>},
     {url:"Stock",component:<Stock/>},
-
+{ url: "clustering", component: <Clustering /> },
     //Cms
     { url: "content", component: <Content /> },
     { url: "menu", component: <Menu /> },

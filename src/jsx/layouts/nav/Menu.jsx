@@ -25,7 +25,7 @@ export const MenuList = [
       { title: "💬 Discussion Admin", to: "chatbox" },
       { title: "👨‍🍳 AiPanel", to: "/AIPanel" },
       { title: "🧾 Stock", to: "/Stock" },
-
+{ title:"Clustering",to: "/Clustering",}
     ],
   },
 ];
