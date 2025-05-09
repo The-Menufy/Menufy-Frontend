@@ -7,6 +7,7 @@ import chatai from '../../../assets/images/ai/chatai.png';
 import recommandation from '../../../assets/images/ai/image.jpg'; 
 import regression from '../../../assets/images/ai/regression.png'; 
 import classification from '../../../assets/images/ai/classification.png';
+import clustering from '../../../assets/images/ai/clustering.png';
 const AIPanel = () => {
     const navigate = useNavigate();
 
@@ -17,6 +18,14 @@ const AIPanel = () => {
             description: 'Get dish recommendations based on ingredients.',
             image: classification,
         },
+
+        {
+            name: 'Clustering',
+            path: '/clustering',
+            description: 'Get dish recommendations based on ingredients.',
+            image: clustering,
+        },
+        
         {
             name: 'Classification',
             path: '/classification',
