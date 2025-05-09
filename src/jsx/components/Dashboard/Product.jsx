@@ -406,7 +406,7 @@ const Product = () => {
           <div>
             <h5 className="mb-3 fw-bold">Product List</h5>
             <div className="d-flex flex-wrap gap-2">
-              <Button variant="success" onClick={() => navigate("/add-product")}>
+              <Button variant="success" onClick={() => navigate("/add-recipe")}>
                 <span className="fw-semibold">➕ Add Product & Recipe</span>
               </Button>
               <Link
