@@ -1,37 +1,31 @@
 export const MenuList = [
-  // Dashboard
   {
-    title: "dashboard", // <-- key, not the string itself
+    title: "📊 Tableau de bord",
     classsChange: "mm-collapse",
     iconStyle: <i className="flaticon-381-networking" />,
     content: [
-      { title: "dashboard", to: "dashboard" },
-      { title: "admin", to: "" },
-      { title: "super_admin", to: "SuperAdmin" },
-      { title: "restaurant", to: "Resto" },
-      { title: "ingredients", to: "ingredients" },
-      { title: "variants", to: "/manage-variants" },
+      { title: "🏠 Accueil", to: "dashboard" },
+      { title: "👨‍💼 Admin", to: "" },
+      { title: "👑 Super Admin", to: "SuperAdmin" },
+      { title: "🏪 Restaurant", to: "Resto" },
+      { title: "🧂 Ingrédients", to: "ingredients" },
+      { title: "🔀 Variantes", to: "/manage-variants" },
     ],
   },
-  // Apps
   {
-    title: "menu_management",
+    title: "📋 Gestion du menu",
     classsChange: "mm-collapse",
     iconStyle: <i className="flaticon-381-networking" />,
     content: [
-      { title: "menu", to: "MenuList" },
-      { title: "category", to: "category" },
-      { title: "product", to: "product" },
-      { title: "ingredient", to: "ingredient" },
-      { title: "utensil", to: "Ustensile" },
-      { title: "dish_of_the_day", to: "DishOfTheDay" },
-      { title: "statistics", to: "Statistics" },
-      { title: "ask_ai", to: "Chat" },
-      { title: "admin_discussion", to: "chatbox" },
-      { title: "variants", to: "/manage-variants" },
-      {title:"Classification",to: "/classification",},
-      {title:"Regression",to: "/regression",},
-      { title:"Recommendation",to: "/recommendation",}
+      { title: "📜 Menu", to: "MenuList" },
+      { title: "🗂️ Catégorie", to: "category" },
+      { title: "🍔 Produit", to: "product" },
+      { title: "🍽️ Plat du jour", to: "DishOfTheDay" },
+      { title: "📈 Statistiques", to: "Statistics" },
+      { title: "💬 Discussion Admin", to: "chatbox" },
+      { title: "👨‍🍳 AiPanel", to: "/AIPanel" },
+      { title: "🧾 Stock", to: "/Stock" },
+
     ],
   },
 ];
