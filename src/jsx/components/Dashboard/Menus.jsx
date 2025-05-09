@@ -61,9 +61,11 @@ const MenuList = () => {
       const res = await fetch(`${BACKEND}/menu`);
       if (!res.ok) throw new Error("Failed to fetch menus");
       const data = await res.json();
+      console.log("Fetched menu data:", data); // Debug: Log fetched data
       setMenus(data);
       setLoading(false);
-    } catch {
+    } catch (err) {
+      console.error("Fetch error:", err); // Debug: Log fetch error
       setError("Failed to fetch menus");
       setLoading(false);
     }
@@ -126,10 +128,14 @@ const MenuList = () => {
     return sortConfig.direction === "asc" ? <ArrowUp /> : <ArrowDown />;
   };
 
-  const getPhotoUrl = (photo) =>
-    photo
-      ? BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
-      : "https://via.placeholder.com/60";
+  const getPhotoUrl = (photo) => {
+    if (photo && photo.startsWith("https://res.cloudinary.com")) {
+      console.log("Using Cloudinary URL:", photo); // Debug: Log Cloudinary URL
+      return photo; // Use the full Cloudinary URL as-is
+    }
+    console.log("Using fallback URL for photo:", photo); // Debug: Log fallback
+    return "/fallback-image.png"; // Local fallback image
+  };
 
   const handleAddMenu = async (e) => {
     e.preventDefault();
@@ -363,7 +369,7 @@ const MenuList = () => {
             <div className="text-danger m-5">Error: {error}</div>
           ) : filteredMenus.length === 0 ? (
             <p>
-              No menus match your search. Click &quot;Add Menu&quot; to create
+              No menus match your search. Click "Add Menu" to create
               one.
             </p>
           ) : (
@@ -413,9 +419,10 @@ const MenuList = () => {
                               objectFit: "cover",
                               borderRadius: "5px",
                             }}
-                            onError={(e) =>
-                              (e.target.src = "https://via.placeholder.com/60")
-                            }
+                            onError={(e) => {
+                              console.error("Image load failed:", menu.photo); // Debug: Log error
+                              e.target.src = "/fallback-image.png"; // Use local fallback
+                            }}
                           />
                         ) : (
                           <span>No photo</span>
@@ -589,9 +596,10 @@ const MenuList = () => {
                       height: "100px",
                       objectFit: "cover",
                     }}
-                    onError={(e) =>
-                      (e.target.src = "https://via.placeholder.com/100")
-                    }
+                    onError={(e) => {
+                      console.error("Image load failed:", selectedMenu.photo); // Debug: Log error
+                      e.target.src = "/fallback-image.png"; // Use local fallback
+                    }}
                   />
                 ) : (
                   "No photo available"
@@ -650,6 +658,10 @@ const MenuList = () => {
                         width: "100px",
                         height: "100px",
                         objectFit: "cover",
+                      }}
+                      onError={(e) => {
+                        console.error("Image load failed:", selectedMenu.photo); // Debug: Log error
+                        e.target.src = "/fallback-image.png"; // Use local fallback
                       }}
                     />
                   </div>
