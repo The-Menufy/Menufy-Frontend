@@ -32,7 +32,7 @@ import ManageVariants from "./components/Dashboard/ManageVariants";
  import RecommendationComponent from "./components/Dashboard/Recommendation";
  import ClassificationComponent from "./components/Dashboard/Classification";
  import RegressionComponent from "./components/Dashboard/Regression";
-
+import Clustering from "./components/Dashboard/Clustering";
 //CMS
 import Content from "./components/Cms/Content";
 import Menu from "./components/Cms/Menu";
@@ -184,6 +184,8 @@ const Markup = () => {
     { url: "classification", component: <ClassificationComponent /> },  // Route for Classification
  		{ url: "regression", component: <RegressionComponent /> },  // Route for Regression
  		{ url: "recommendation", component: <RecommendationComponent /> },
+     { url: "clustering", component: <Clustering /> },
+
     //Cms
     { url: "content", component: <Content /> },
     { url: "menu", component: <Menu /> },

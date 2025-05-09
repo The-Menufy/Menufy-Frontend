@@ -31,7 +31,9 @@ export const MenuList = [
       { title: "variants", to: "/manage-variants" },
       {title:"Classification",to: "/classification",},
       {title:"Regression",to: "/regression",},
-      { title:"Recommendation",to: "/recommendation",}
+      { title:"Recommendation",to: "/recommendation",},
+      { title:"Clustering",to: "/Clustering",}
+
     ],
   },
 ];
