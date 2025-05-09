@@ -24,16 +24,14 @@ const ManageVariants = () => {
     name: "",
     portions: [],
     note: "",
-    images: [],
   });
+  const [newImageFile, setNewImageFile] = useState(null); // Separate state for file input
+  const [editImageFile, setEditImageFile] = useState(null); // Separate state for file input during edit
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Helper for media url
-  const getMediaUrl = (media) =>
-    media
-      ? BACKEND + (media.startsWith("/") ? media : `/${media}`)
-      : "https://via.placeholder.com/100?text=No+Image";
+  // Helper for media URL
+  const getMediaUrl = (media) => media || "https://via.placeholder.com/100?text=No+Image";
 
   // Fetch all variants
   const fetchVariants = async () => {
@@ -69,9 +67,7 @@ const ManageVariants = () => {
     formData.append("name", newVariant.name);
     formData.append("portions", newVariant.portions.join(","));
     formData.append("note", newVariant.note);
-    if (newVariant.images.length > 0) {
-      formData.append("photo", newVariant.images[0]);
-    }
+    if (newImageFile) formData.append("photo", newImageFile);
 
     try {
       const response = await fetch(`${BACKEND}/api/recipe-variants`, {
@@ -87,8 +83,8 @@ const ManageVariants = () => {
         name: "",
         portions: [],
         note: "",
-        images: [],
       });
+      setNewImageFile(null);
       await fetchVariants();
       alert("Variant added successfully!");
     } catch (error) {
@@ -106,13 +102,7 @@ const ManageVariants = () => {
     formData.append("name", selectedVariant.name);
     formData.append("portions", selectedVariant.portions.join(","));
     formData.append("note", selectedVariant.note);
-
-    if (
-      selectedVariant.images.length > 0 &&
-      selectedVariant.images[0] instanceof File
-    ) {
-      formData.append("photo", selectedVariant.images[0]);
-    }
+    if (editImageFile) formData.append("photo", editImageFile);
 
     try {
       const response = await fetch(
@@ -128,6 +118,7 @@ const ManageVariants = () => {
       }
       setShowEditModal(false);
       setSelectedVariant(null);
+      setEditImageFile(null);
       await fetchVariants();
       alert("Variant updated successfully!");
     } catch (error) {
@@ -221,7 +212,8 @@ const ManageVariants = () => {
 
   // Handle edit variant
   const handleEditVariant = (variant) => {
-    setSelectedVariant({ ...variant, images: [] });
+    setSelectedVariant(variant);
+    setEditImageFile(null); // Reset file input
     setShowEditModal(true);
   };
 
@@ -487,15 +479,13 @@ const ManageVariants = () => {
               <Form.Control
                 type="file"
                 accept="image/*"
-                onChange={(e) =>
-                  setNewVariant({ ...newVariant, images: [e.target.files[0]] })
-                }
+                onChange={(e) => setNewImageFile(e.target.files[0])}
               />
-              {newVariant.images.length > 0 && newVariant.images[0] instanceof File && (
+              {newImageFile && (
                 <div className="mt-2">
                   <strong>Selected Image Preview:</strong>
                   <img
-                    src={URL.createObjectURL(newVariant.images[0])}
+                    src={URL.createObjectURL(newImageFile)}
                     alt="Preview"
                     style={{
                       width: "100px",
@@ -511,7 +501,10 @@ const ManageVariants = () => {
             <Modal.Footer>
               <Button
                 variant="secondary"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setNewImageFile(null);
+                }}
               >
                 Cancel
               </Button>
@@ -646,7 +639,7 @@ const ManageVariants = () => {
                 <div>
                   {selectedVariant.images &&
                   selectedVariant.images.length > 0 &&
-                  !(selectedVariant.images[0] instanceof File) ? (
+                  typeof selectedVariant.images[0] === "string" ? (
                     <img
                       src={getMediaUrl(selectedVariant.images[0])}
                       alt={selectedVariant.name}
@@ -669,35 +662,32 @@ const ManageVariants = () => {
                 <Form.Control
                   type="file"
                   accept="image/*"
-                  onChange={(e) =>
-                    setSelectedVariant({
-                      ...selectedVariant,
-                      images: [e.target.files[0]],
-                    })
-                  }
+                  onChange={(e) => setEditImageFile(e.target.files[0])}
                 />
-                {selectedVariant.images.length > 0 &&
-                  selectedVariant.images[0] instanceof File && (
-                    <div className="mt-2">
-                      <strong>New Image Preview:</strong>
-                      <img
-                        src={URL.createObjectURL(selectedVariant.images[0])}
-                        alt="Preview"
-                        style={{
-                          width: "100px",
-                          height: "100px",
-                          objectFit: "cover",
-                          marginTop: "10px",
-                        }}
-                      />
-                    </div>
-                  )}
+                {editImageFile && (
+                  <div className="mt-2">
+                    <strong>New Image Preview:</strong>
+                    <img
+                      src={URL.createObjectURL(editImageFile)}
+                      alt="Preview"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        objectFit: "cover",
+                        marginTop: "10px",
+                      }}
+                    />
+                  </div>
+                )}
               </Form.Group>
 
               <Modal.Footer>
                 <Button
                   variant="secondary"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditImageFile(null);
+                  }}
                 >
                   Cancel
                 </Button>

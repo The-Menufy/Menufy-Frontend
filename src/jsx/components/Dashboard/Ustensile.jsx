@@ -46,10 +46,9 @@ const Ustensile = () => {
     libelle: "",
     quantity: 0,
     disponibility: true,
-    photo: null,
   });
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoEditFile, setPhotoEditFile] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null); // Separate state for file input
+  const [photoEditFile, setPhotoEditFile] = useState(null); // Separate state for file input during edit
 
   const loadUstensiles = async () => {
     try {
@@ -58,7 +57,7 @@ const Ustensile = () => {
       const ustensileData = await response.json();
       setUstensiles(ustensileData);
       setLoading(false);
-    } catch {
+    } catch (err) {
       setError("Failed to fetch ustensiles");
       setLoading(false);
     }
@@ -90,7 +89,6 @@ const Ustensile = () => {
         libelle: "",
         quantity: 0,
         disponibility: true,
-        photo: null,
       });
       setPhotoFile(null);
     } catch (err) {
@@ -223,9 +221,7 @@ const Ustensile = () => {
   };
 
   const getPhotoUrl = (photo) =>
-    photo
-      ? BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
-      : "https://via.placeholder.com/60";
+    photo || "https://via.placeholder.com/60";
 
   const filteredUstensiles = ustensiles
     .filter((u) => {
@@ -359,7 +355,7 @@ const Ustensile = () => {
             <div className="text-danger m-5">Error: {error}</div>
           ) : filteredUstensiles.length === 0 ? (
             <p>
-              No ustensiles match your search. Click &quot;Add Ustensile&quot;
+              No ustensiles match your search. Click "Add Ustensile"
               to create one.
             </p>
           ) : (
@@ -443,7 +439,7 @@ const Ustensile = () => {
                           }}
                           className="ms-2"
                           onClick={() => {
-                            setSelectedUstensile({ ...u, photo: null });
+                            setSelectedUstensile(u);
                             setShowEditModal(true);
                           }}
                         >
@@ -572,6 +568,20 @@ const Ustensile = () => {
                 accept="image/jpeg,image/jpg,image/png"
                 onChange={(e) => setPhotoFile(e.target.files[0])}
               />
+              {photoFile && (
+                <div className="mt-2">
+                  <strong>Selected Image Preview:</strong>
+                  <img
+                    src={URL.createObjectURL(photoFile)}
+                    alt="Preview"
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      objectFit: "cover",
+                    }}
+                  />
+                </div>
+              )}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Quantity</Form.Label>
@@ -606,7 +616,10 @@ const Ustensile = () => {
             <Modal.Footer>
               <Button
                 variant="secondary"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setPhotoFile(null);
+                }}
               >
                 Cancel
               </Button>
@@ -642,7 +655,7 @@ const Ustensile = () => {
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Photo</Form.Label>
-                {selectedUstensile.photo && (
+                {selectedUstensile.photo && typeof selectedUstensile.photo === "string" && (
                   <div className="mb-2">
                     <img
                       src={getPhotoUrl(selectedUstensile.photo)}
@@ -652,6 +665,9 @@ const Ustensile = () => {
                         height: "100px",
                         objectFit: "cover",
                       }}
+                      onError={(e) =>
+                        (e.target.src = "https://via.placeholder.com/100")
+                      }
                     />
                   </div>
                 )}
@@ -660,6 +676,20 @@ const Ustensile = () => {
                   accept="image/jpeg,image/jpg,image/png"
                   onChange={(e) => setPhotoEditFile(e.target.files[0])}
                 />
+                {photoEditFile && (
+                  <div className="mt-2">
+                    <strong>New Image Preview:</strong>
+                    <img
+                      src={URL.createObjectURL(photoEditFile)}
+                      alt="Preview"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+                )}
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Quantity</Form.Label>
@@ -694,7 +724,10 @@ const Ustensile = () => {
               <Modal.Footer>
                 <Button
                   variant="secondary"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setPhotoEditFile(null);
+                  }}
                 >
                   Cancel
                 </Button>

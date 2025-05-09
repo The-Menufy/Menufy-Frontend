@@ -45,9 +45,11 @@ const Category = () => {
     try {
       const res = await fetch(`${BACKEND}/category`);
       const data = await res.json();
+      console.log("Fetched categories:", data); // Debug: Log fetched data
       setCategories(data);
       setLoading(false);
-    } catch {
+    } catch (err) {
+      console.error("Fetch error:", err); // Debug: Log fetch error
       setError("Failed to fetch categories");
       setLoading(false);
     }
@@ -249,11 +251,15 @@ const Category = () => {
     );
   };
 
-  // Helper to build full photo URL from category photo path
-  const getPhotoUrl = (photo) =>
-    photo
-      ? BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
-      : "https://via.placeholder.com/60";
+  // Helper to build full photo URL
+  const getPhotoUrl = (photo) => {
+    if (photo && photo.startsWith("https://res.cloudinary.com")) {
+      console.log("Using Cloudinary URL:", photo); // Debug: Log Cloudinary URL
+      return photo; // Use the full Cloudinary URL as-is
+    }
+    console.log("Using fallback URL for photo:", photo); // Debug: Log fallback
+    return "/fallback-image.png"; // Local fallback image
+  };
 
   return (
     <div className="container-fluid p-4">
@@ -358,9 +364,10 @@ const Category = () => {
                               objectFit: "cover",
                               borderRadius: "5px",
                             }}
-                            onError={(e) =>
-                              (e.target.src = "https://via.placeholder.com/60")
-                            }
+                            onError={(e) => {
+                              console.error("Image load failed:", cat.photo); // Debug: Log error
+                              e.target.src = "/fallback-image.png"; // Use local fallback
+                            }}
                           />
                         ) : (
                           <span>No photo</span>
@@ -478,6 +485,7 @@ const Category = () => {
               <Form.Label>Photo</Form.Label>
               <Form.Control
                 type="file"
+                accept="image/jpeg,image/jpg,image/png"
                 onChange={(e) => setPhotoFile(e.target.files[0])}
               />
             </Form.Group>
@@ -548,9 +556,10 @@ const Category = () => {
                       height: "100px",
                       objectFit: "cover",
                     }}
-                    onError={(e) =>
-                      (e.target.src = "https://via.placeholder.com/100")
-                    }
+                    onError={(e) => {
+                      console.error("Image load failed:", selectedCategory.photo); // Debug: Log error
+                      e.target.src = "/fallback-image.png"; // Use local fallback
+                    }}
                   />
                 ) : (
                   "No photo available"
@@ -621,11 +630,16 @@ const Category = () => {
                         height: "100px",
                         objectFit: "cover",
                       }}
+                      onError={(e) => {
+                        console.error("Image load failed:", selectedCategory.photo); // Debug: Log error
+                        e.target.src = "/fallback-image.png"; // Use local fallback
+                      }}
                     />
                   </div>
                 )}
                 <Form.Control
                   type="file"
+                  accept="image/jpeg,image/jpg,image/png"
                   onChange={(e) => setPhotoEditFile(e.target.files[0])}
                 />
               </Form.Group>

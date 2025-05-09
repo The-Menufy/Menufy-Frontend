@@ -315,6 +315,7 @@ const Markup = () => {
         <Route element={<UserLayout />}>
           <Route path="/homepage" element={<HomePage />} />
           <Route path="/MenuPage" element={<MenuPage />} />
+          
           {/* You can add more public routes here if you want them to use UserLayout */}
           {/* <Route path="/about" element={<AboutPage />} /> */}
         </Route>

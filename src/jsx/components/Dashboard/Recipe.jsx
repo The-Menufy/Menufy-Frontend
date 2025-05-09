@@ -33,8 +33,10 @@ const RecipePage = () => {
 
   const getMediaUrl = (media) =>
     media
-      ? BACKEND + (media.startsWith("/") ? media : `/${media}`)
-      : "/placeholder-image.jpg";
+      ? media.startsWith("http")
+        ? media // If it's already a full URL, return it
+        : `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload/${media}` // Cloudinary URL format
+      : "/placeholder-image.jpg"; // Default image URL if media doesn't exist
 
   return (
     <div className="container mt-4 mb-4">
