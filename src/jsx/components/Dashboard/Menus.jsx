@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   Table,
@@ -9,6 +9,8 @@ import {
   InputGroup,
   FormControl,
   Pagination,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import {
   Plus,
@@ -20,7 +22,7 @@ import {
   MicFill,
 } from "react-bootstrap-icons";
 
-// Use Vite env variable for backend URL, strip trailing /api if present for bare endpoint
+// Use Vite env variable for backend URL
 const BACKEND =
   import.meta.env.VITE_BACKEND_URL?.replace(/\/api\/?$/, "") || "";
 
@@ -35,12 +37,9 @@ const MenuList = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [listening, setListening] = useState(false);
-  const [sortConfig, setSortConfig] = useState({
-    key: "name",
-    direction: "asc",
-  });
+  const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Match Category.jsx
+  const itemsPerPage = 5;
 
   const [newMenu, setNewMenu] = useState({
     name: "",
@@ -51,25 +50,29 @@ const MenuList = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoEditFile, setPhotoEditFile] = useState(null);
 
-  useEffect(() => {
-    fetchMenus();
-    // eslint-disable-next-line
-  }, []);
-
-  const fetchMenus = async () => {
+  const fetchMenus = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await fetch(`${BACKEND}/menu`);
       if (!res.ok) throw new Error("Failed to fetch menus");
       const data = await res.json();
-      console.log("Fetched menu data:", data); // Debug: Log fetched data
       setMenus(data);
-      setLoading(false);
     } catch (err) {
-      console.error("Fetch error:", err); // Debug: Log fetch error
-      setError("Failed to fetch menus");
+      setError("Failed to fetch menus: " + err.message);
+    } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchMenus();
+
+    // Cleanup for speech recognition
+    return () => {
+      setListening(false);
+    };
+  }, [fetchMenus]);
 
   const handleSearch = (e) => {
     const term = e.target.value;
@@ -81,9 +84,7 @@ const MenuList = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert(
-        "La reconnaissance vocale n'est pas supportée par votre navigateur."
-      );
+      setError("La reconnaissance vocale n'est pas supportée par votre navigateur.");
       return;
     }
 
@@ -105,7 +106,7 @@ const MenuList = () => {
     };
 
     recognition.onerror = (event) => {
-      console.error("Erreur de reconnaissance vocale :", event.error);
+      setError("Erreur de reconnaissance vocale: " + event.error);
       setListening(false);
     };
 
@@ -130,16 +131,15 @@ const MenuList = () => {
 
   const getPhotoUrl = (photo) => {
     if (photo && photo.startsWith("https://res.cloudinary.com")) {
-      console.log("Using Cloudinary URL:", photo); // Debug: Log Cloudinary URL
-      return photo; // Use the full Cloudinary URL as-is
+      return photo;
     }
-    console.log("Using fallback URL for photo:", photo); // Debug: Log fallback
-    return "/fallback-image.png"; // Local fallback image
+    return "/fallback-image.png";
   };
 
   const handleAddMenu = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append("name", newMenu.name);
       formData.append("visibility", newMenu.visibility);
@@ -158,7 +158,9 @@ const MenuList = () => {
       setNewMenu({ name: "", visibility: "visible", rate: "", photo: null });
       setPhotoFile(null);
     } catch (err) {
-      alert("Error adding menu: " + err.message);
+      setError("Error adding menu: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -170,6 +172,7 @@ const MenuList = () => {
   const handleUpdateMenu = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append("name", selectedMenu.name);
       formData.append("visibility", selectedMenu.visibility);
@@ -188,13 +191,16 @@ const MenuList = () => {
       setSelectedMenu(null);
       setPhotoEditFile(null);
     } catch (err) {
-      alert("Error updating menu: " + err.message);
+      setError("Error updating menu: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteMenu = async (id) => {
     if (!window.confirm("Are you sure you want to delete this menu?")) return;
     try {
+      setLoading(true);
       const res = await fetch(`${BACKEND}/menu/${id}`, {
         method: "DELETE",
       });
@@ -203,13 +209,16 @@ const MenuList = () => {
       const totalPages = Math.ceil(filteredMenus.length / itemsPerPage);
       if (currentPage > totalPages) setCurrentPage(totalPages || 1);
     } catch (err) {
-      alert("Error deleting menu: " + err.message);
+      setError("Error deleting menu: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleArchiveMenu = async (id) => {
     if (!window.confirm("Voulez-vous archiver ce menu ?")) return;
     try {
+      setLoading(true);
       const res = await fetch(`${BACKEND}/menu/${id}/archive`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -217,13 +226,16 @@ const MenuList = () => {
       if (!res.ok) throw new Error("Erreur d'archivage");
       await fetchMenus();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      setError("Erreur : " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRestoreMenu = async (id) => {
     if (!window.confirm("Voulez-vous restaurer ce menu ?")) return;
     try {
+      setLoading(true);
       const res = await fetch(`${BACKEND}/menu/${id}/restore`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -231,11 +243,12 @@ const MenuList = () => {
       if (!res.ok) throw new Error("Erreur de restauration");
       await fetchMenus();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      setError("Erreur : " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Filter and sort menus
   const filteredMenus = menus
     .filter((menu) => {
       const matchSearch = menu.name
@@ -268,7 +281,6 @@ const MenuList = () => {
         : bValue.localeCompare(aValue);
     });
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredMenus.slice(indexOfFirstItem, indexOfLastItem);
@@ -311,22 +323,236 @@ const MenuList = () => {
     );
   };
 
+  const styles = `
+    :root {
+      --primary-color: #28A745;
+      --secondary-color: #007BFF;
+      --danger-color: #DC3545;
+      --warning-color: #FFC107;
+      --info-color: #17A2B8;
+      --light-gray: #F8F9FA;
+      --dark-gray: #343A40;
+      --border-radius: 8px;
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+      border: none;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .table {
+      background-color: #fff;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--box-shadow);
+    }
+
+    .table th {
+      background-color: var(--light-gray);
+      color: var(--dark-gray);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .table th:hover {
+      background-color: #e9ecef;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    .table img {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      transition: transform 0.2s;
+    }
+
+    .table img:hover {
+      transform: scale(1.1);
+    }
+
+    .btn-custom {
+      border-radius: var(--border-radius);
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-custom:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .btn-add {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-view {
+      background-color: var(--info-color);
+      border-color: var(--info-color);
+    }
+
+    .btn-edit {
+      background-color: var(--warning-color);
+      border-color: var(--warning-color);
+      color: #212529;
+    }
+
+    .btn-archive, .btn-restore {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+
+    .btn-restore {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-delete {
+      background-color: var(--danger-color);
+      border-color: var(--danger-color);
+    }
+
+    .btn-voice {
+      transition: all 0.3s ease;
+    }
+
+    .btn-voice.listening {
+      background-color: var(--danger-color) !important;
+      border-color: var(--danger-color) !important;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .form-control, .form-select {
+      border-radius: var(--border-radius);
+      border: 1px solid #ced4da;
+      transition: border-color 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+    }
+
+    .form-label {
+      font-weight: 500;
+      color: var(--dark-gray);
+    }
+
+    .modal-header {
+      border-bottom: 2px solid #ddd;
+    }
+
+    .modal-title {
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-img {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    @media (max-width: 768px) {
+      .table-responsive {
+        font-size: 0.85rem;
+      }
+      .table img {
+        width: 40px;
+        height: 40px;
+      }
+      .table td, .table th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+      }
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+      .action-buttons .btn {
+        font-size: 0.8rem;
+        padding: 0.3rem;
+        margin: 0 !important;
+      }
+      .modal-img {
+        width: 80px;
+        height: 80px;
+        display: block;
+        margin: 0 auto;
+      }
+      .hide-on-mobile {
+        display: none !important;
+      }
+      .card-header .d-flex:last-child .input-group {
+        max-width: 200px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .action-buttons .btn {
+        width: 100%;
+      }
+      .pagination {
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+      }
+      .pagination .page-item {
+        margin: 0.2rem;
+      }
+      .card-header .d-flex:last-child .input-group {
+        max-width: 150px;
+      }
+    }
+  `;
+
   return (
     <div className="container-fluid p-4">
+      <style>{styles}</style>
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
           <div className="d-flex flex-column align-items-start">
-            <h5>Menu List</h5>
-            <Button
-              style={{ backgroundColor: "#28A745", borderColor: "#28A745" }}
-              onClick={() => setShowAddModal(true)}
+            <h5 className="mb-3">Menu List</h5>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>Add a new menu</Tooltip>}
             >
-              <Plus /> Add Menu
-            </Button>
+              <Button className="btn-custom btn-add" onClick={() => setShowAddModal(true)}>
+                <Plus /> Add Menu
+              </Button>
+            </OverlayTrigger>
             <div className="mt-2">
               <Button
                 variant={!showArchived ? "primary" : "outline-secondary"}
-                className="me-2"
+                className="me-2 btn-custom"
                 onClick={() => {
                   setShowArchived(false);
                   setCurrentPage(1);
@@ -336,6 +562,7 @@ const MenuList = () => {
               </Button>
               <Button
                 variant={showArchived ? "primary" : "outline-secondary"}
+                className="btn-custom"
                 onClick={() => {
                   setShowArchived(true);
                   setCurrentPage(1);
@@ -352,152 +579,160 @@ const MenuList = () => {
                 value={searchTerm}
                 onChange={handleSearch}
               />
-              <Button
-                variant={listening ? "danger" : "secondary"}
-                onClick={handleVoiceSearch}
-                title="Recherche vocale"
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Recherche vocale</Tooltip>}
               >
-                <MicFill />
-              </Button>
+                <Button
+                  variant={listening ? "danger" : "secondary"}
+                  onClick={handleVoiceSearch}
+                  className={`btn-voice ${listening ? "listening" : ""}`}
+                >
+                  <MicFill />
+                </Button>
+              </OverlayTrigger>
             </InputGroup>
           </div>
         </Card.Header>
         <Card.Body>
           {loading ? (
-            <Spinner animation="border" className="m-5" />
+            <div className="text-center m-5">
+              <Spinner animation="border" variant="primary" />
+            </div>
           ) : error ? (
-            <div className="text-danger m-5">Error: {error}</div>
+            <div className="text-danger text-center m-5">Error: {error}</div>
           ) : filteredMenus.length === 0 ? (
-            <p>
-              No menus match your search. Click "Add Menu" to create
-              one.
+            <p className="text-center">
+              No menus match your search. Click "Add Menu" to create one.
             </p>
           ) : (
             <>
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th>Photo</th>
-                    <th
-                      onClick={() => handleSort("name")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Name {getSortIcon("name")}
-                    </th>
-                    <th
-                      onClick={() => handleSort("visibility")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Visibility {getSortIcon("visibility")}
-                    </th>
-                    <th
-                      onClick={() => handleSort("rate")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Rate {getSortIcon("rate")}
-                    </th>
-                    <th
-                      onClick={() => handleSort("archived")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Archived {getSortIcon("archived")}
-                    </th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentItems.map((menu) => (
-                    <tr key={menu._id}>
-                      <td>
-                        {menu.photo ? (
-                          <img
-                            src={getPhotoUrl(menu.photo)}
-                            alt={menu.name}
-                            style={{
-                              width: "60px",
-                              height: "60px",
-                              objectFit: "cover",
-                              borderRadius: "5px",
-                            }}
-                            onError={(e) => {
-                              console.error("Image load failed:", menu.photo); // Debug: Log error
-                              e.target.src = "/fallback-image.png"; // Use local fallback
-                            }}
-                          />
-                        ) : (
-                          <span>No photo</span>
-                        )}
-                      </td>
-                      <td>{menu.name}</td>
-                      <td>{menu.visibility}</td>
-                      <td>{menu.rate}</td>
-                      <td>{menu.archived ? "Yes" : "No"}</td>
-                      <td>
-                        <Button
-                          size="sm"
-                          style={{
-                            backgroundColor: "#007BFF",
-                            borderColor: "#007BFF",
-                          }}
-                          onClick={() => {
-                            setSelectedMenu(menu);
-                            setShowViewModal(true);
-                          }}
-                        >
-                          <Eye />
-                        </Button>
-                        <Button
-                          size="sm"
-                          style={{
-                            backgroundColor: "#FFD600",
-                            borderColor: "#FFD600",
-                          }}
-                          className="ms-2"
-                          onClick={() => handleEditMenu(menu)}
-                        >
-                          <Pencil />
-                        </Button>
-                        {showArchived ? (
-                          <Button
-                            size="sm"
-                            style={{
-                              backgroundColor: "#28A745",
-                              borderColor: "#28A745",
-                            }}
-                            className="ms-2"
-                            onClick={() => handleRestoreMenu(menu._id)}
-                          >
-                            🔄 Restaurer
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            style={{
-                              backgroundColor: "#6c757d",
-                              borderColor: "#6c757d",
-                            }}
-                            className="ms-2"
-                            onClick={() => handleArchiveMenu(menu._id)}
-                          >
-                            🗄️
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          style={{
-                            backgroundColor: "#FF0000",
-                            borderColor: "#FF0000",
-                          }}
-                          className="ms-2"
-                          onClick={() => handleDeleteMenu(menu._id)}
-                        >
-                          <Trash />
-                        </Button>
-                      </td>
+              <div className="table-responsive">
+                <Table striped bordered hover>
+                  <thead>
+                    <tr>
+                      <th className="hide-on-mobile">Photo</th>
+                      <th onClick={() => handleSort("name")}>
+                        Name {getSortIcon("name")}
+                      </th>
+                      <th onClick={() => handleSort("visibility")} className="hide-on-mobile">
+                        Visibility {getSortIcon("visibility")}
+                      </th>
+                      <th onClick={() => handleSort("rate")}>
+                        Rate {getSortIcon("rate")}
+                      </th>
+                      <th onClick={() => handleSort("archived")} className="hide-on-mobile">
+                        Archived {getSortIcon("archived")}
+                      </th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {currentItems.map((menu) => (
+                      <tr key={menu._id}>
+                        <td className="hide-on-mobile">
+                          {menu.photo ? (
+                            <img
+                              src={getPhotoUrl(menu.photo)}
+                              alt={menu.name}
+                              style={{
+                                width: "60px",
+                                height: "60px",
+                                objectFit: "cover",
+                                borderRadius: "5px",
+                              }}
+                              onError={(e) => {
+                                e.target.src = "/fallback-image.png";
+                              }}
+                            />
+                          ) : (
+                            <span>No photo</span>
+                          )}
+                        </td>
+                        <td>{menu.name}</td>
+                        <td className="hide-on-mobile">{menu.visibility}</td>
+                        <td>{menu.rate}</td>
+                        <td className="hide-on-mobile">
+                          {menu.archived ? "Yes" : "No"}
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <OverlayTrigger
+                              placement="top"
+                              overlay={<Tooltip>View menu details</Tooltip>}
+                            >
+                              <Button
+                                size="sm"
+                                className="btn-custom btn-view"
+                                onClick={() => {
+                                  setSelectedMenu(menu);
+                                  setShowViewModal(true);
+                                }}
+                              >
+                                <Eye />
+                              </Button>
+                            </OverlayTrigger>
+                            <OverlayTrigger
+                              placement="top"
+                              overlay={<Tooltip>Edit menu</Tooltip>}
+                            >
+                              <Button
+                                size="sm"
+                                className="ms-2 btn-custom btn-edit"
+                                onClick={() => handleEditMenu(menu)}
+                              >
+                                <Pencil />
+                              </Button>
+                            </OverlayTrigger>
+                            {showArchived ? (
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip>Restore menu</Tooltip>}
+                              >
+                                <Button
+                                  size="sm"
+                                  className="ms-2 btn-custom btn-restore"
+                                  onClick={() => handleRestoreMenu(menu._id)}
+                                  disabled={loading}
+                                >
+                                  🔄 Restaurer
+                                </Button>
+                              </OverlayTrigger>
+                            ) : (
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip>Archive menu</Tooltip>}
+                              >
+                                <Button
+                                  size="sm"
+                                  className="ms-2 btn-custom btn-archive"
+                                  onClick={() => handleArchiveMenu(menu._id)}
+                                  disabled={loading}
+                                >
+                                  🗄️
+                                </Button>
+                              </OverlayTrigger>
+                            )}
+                            <OverlayTrigger
+                              placement="top"
+                              overlay={<Tooltip>Delete menu</Tooltip>}
+                            >
+                              <Button
+                                size="sm"
+                                className="ms-2 btn-custom btn-delete"
+                                onClick={() => handleDeleteMenu(menu._id)}
+                                disabled={loading}
+                              >
+                                <Trash />
+                              </Button>
+                            </OverlayTrigger>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
               {renderPagination()}
             </>
           )}
@@ -565,12 +800,19 @@ const MenuList = () => {
             <Modal.Footer>
               <Button
                 variant="secondary"
+                className="btn-custom"
                 onClick={() => setShowAddModal(false)}
+                disabled={loading}
               >
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
-                Add
+              <Button
+                variant="primary"
+                className="btn-custom"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? <Spinner animation="border" size="sm" /> : "Add"}
               </Button>
             </Modal.Footer>
           </Form>
@@ -591,14 +833,14 @@ const MenuList = () => {
                   <img
                     src={getPhotoUrl(selectedMenu.photo)}
                     alt={selectedMenu.name || "Menu Photo"}
+                    className="modal-img"
                     style={{
-                      width: "100px",
-                      height: "100px",
+                      width: "80px",
+                      height: "80px",
                       objectFit: "cover",
                     }}
                     onError={(e) => {
-                      console.error("Image load failed:", selectedMenu.photo); // Debug: Log error
-                      e.target.src = "/fallback-image.png"; // Use local fallback
+                      e.target.src = "/fallback-image.png";
                     }}
                   />
                 ) : (
@@ -622,7 +864,11 @@ const MenuList = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowViewModal(false)}>
+          <Button
+            variant="secondary"
+            className="btn-custom"
+            onClick={() => setShowViewModal(false)}
+          >
             Close
           </Button>
         </Modal.Footer>
@@ -654,14 +900,14 @@ const MenuList = () => {
                     <img
                       src={getPhotoUrl(selectedMenu.photo)}
                       alt="Current"
+                      className="modal-img"
                       style={{
-                        width: "100px",
-                        height: "100px",
+                        width: "80px",
+                        height: "80px",
                         objectFit: "cover",
                       }}
                       onError={(e) => {
-                        console.error("Image load failed:", selectedMenu.photo); // Debug: Log error
-                        e.target.src = "/fallback-image.png"; // Use local fallback
+                        e.target.src = "/fallback-image.png";
                       }}
                     />
                   </div>
@@ -713,12 +959,19 @@ const MenuList = () => {
               <Modal.Footer>
                 <Button
                   variant="secondary"
+                  className="btn-custom"
                   onClick={() => setShowEditModal(false)}
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button variant="primary" type="submit">
-                  Update
+                <Button
+                  variant="primary"
+                  className="btn-custom"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? <Spinner animation="border" size="sm" /> : "Update"}
                 </Button>
               </Modal.Footer>
             </Form>

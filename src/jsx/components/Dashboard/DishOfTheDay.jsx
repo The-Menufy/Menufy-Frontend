@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { Card, Table, Button, Modal, Form, Spinner, Alert, Row, Col, Badge } from "react-bootstrap";
+import {
+  Card,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Spinner,
+  Alert,
+  Row,
+  Col,
+  Badge,
+} from "react-bootstrap";
 import { Plus, Eye, Pencil, Trash } from "react-bootstrap-icons";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -252,8 +263,63 @@ const DishOfTheDay = () => {
         : BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
       : "https://placehold.co/150x150";
 
+  const styles = `
+    @media (max-width: 768px) {
+      .fc {
+        font-size: 0.85rem;
+      }
+      .fc-toolbar-chunk {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .fc-button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+      }
+      .modal-dialog {
+        max-width: 90%;
+      }
+      .modal-content .card-img-top {
+        height: 100px;
+        object-fit: cover;
+      }
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+      .action-buttons .btn {
+        font-size: 0.8rem;
+        padding: 0.3rem;
+        margin: 0 !important;
+      }
+      .modal-body .row .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+    }
+    @media (max-width: 576px) {
+      .fc {
+        font-size: 0.75rem;
+      }
+      .card-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      .modal-body .row .col-md-4 .card {
+        margin-bottom: 1rem;
+      }
+      .action-buttons .btn {
+        width: 100%;
+      }
+    }
+  `;
+
   return (
     <div className="container-fluid p-4">
+      <style>{styles}</style>
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div className="d-flex flex-column align-items-start gap-2">
@@ -339,7 +405,7 @@ const DishOfTheDay = () => {
                         <Card.Title className="text-center">
                           {product?.name || "N/A"}
                         </Card.Title>
-                        <div className="d-flex justify-content-center gap-2 mt-3">
+                        <div className="d-flex justify-content-center gap-2 mt-3 action-buttons">
                           <Button
                             variant="info"
                             size="sm"
