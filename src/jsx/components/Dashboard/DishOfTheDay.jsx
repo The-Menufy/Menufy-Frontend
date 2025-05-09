@@ -1,20 +1,12 @@
 import { useState, useEffect } from "react";
-import {
-  Card,
-  Table,
-  Button,
-  Modal,
-  Form,
-  Spinner,
-  FormControl,
-  Pagination,
-  Alert,
-} from "react-bootstrap";
-import { Plus, Pencil, Trash, Eye } from "react-bootstrap-icons";
+import { Card, Table, Button, Modal, Form, Spinner, Alert, Row, Col, Badge } from "react-bootstrap";
+import { Plus, Eye, Pencil, Trash } from "react-bootstrap-icons";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
 // Use Vite env variable for backend URL, strip trailing /api if present for bare endpoint
-const BACKEND =
-  import.meta.env.VITE_BACKEND_URL?.replace(/\/api\/?$/, "") || "";
+const BACKEND = import.meta.env.VITE_BACKEND_URL?.replace(/\/api\/?$/, "") || "";
 
 const DishOfTheDay = () => {
   const [dishes, setDishes] = useState([]);
@@ -22,13 +14,15 @@ const DishOfTheDay = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showDayModal, setShowDayModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedDish, setSelectedDish] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
+  const [updateDishDate, setUpdateDishDate] = useState("");
+  const [isRandomAdd, setIsRandomAdd] = useState(false);
+  const [randomDishCount, setRandomDishCount] = useState(1);
   const [newDish, setNewDish] = useState({
     date: "",
     statut: "Active",
@@ -55,6 +49,8 @@ const DishOfTheDay = () => {
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await fetch(`${BACKEND}/product`);
       if (!res.ok) {
         const errorText = await res.text();
@@ -64,31 +60,96 @@ const DishOfTheDay = () => {
       setProducts(data);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProductById = async (productId) => {
+    try {
+      const existingProduct = products.find((p) => p._id === productId);
+      if (existingProduct) return existingProduct;
+
+      setLoading(true);
+      const res = await fetch(`${BACKEND}/product/${productId}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch product with ID ${productId}`);
+      }
+      const data = await res.json();
+      setProducts((prevProducts) => [...prevProducts, data]);
+      return data;
+    } catch (err) {
+      console.error(err.message);
+      return null;
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDishes();
-    fetchProducts();
-    // eslint-disable-next-line
+    const loadData = async () => {
+      await fetchDishes();
+      await fetchProducts();
+    };
+    loadData();
   }, []);
 
   const handleAddDish = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${BACKEND}/dish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newDish),
-      });
+      let res;
+      if (isRandomAdd) {
+        // Add random dishes
+        res = await fetch(`${BACKEND}/dish/random`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: selectedDate || newDish.date,
+            count: parseInt(randomDishCount),
+            statut: newDish.statut,
+          }),
+        });
+      } else {
+        // Add single dish
+        if (!newDish.date || !newDish.productFK) {
+          throw new Error("Date and product are required");
+        }
+        res = await fetch(`${BACKEND}/dish`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newDish),
+        });
+      }
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(`Failed to add dish: ${errorText}`);
+        throw new Error(`Failed to add dish(es): ${errorText}`);
       }
       await fetchDishes();
       setShowAddModal(false);
       setNewDish({ date: "", statut: "Active", productFK: "" });
+      setIsRandomAdd(false);
+      setRandomDishCount(1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDish = async (dishId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`${BACKEND}/dish/${dishId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to delete dish: ${errorText}`);
+      }
+      await fetchDishes();
+      setShowDayModal(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -97,21 +158,24 @@ const DishOfTheDay = () => {
   };
 
   const handleUpdateDish = async () => {
+    if (!selectedDish) return;
     try {
       setLoading(true);
       setError(null);
       const res = await fetch(`${BACKEND}/dish/${selectedDish._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedDish),
+        body: JSON.stringify({ ...selectedDish, date: updateDishDate }),
       });
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(`Failed to update dish: ${errorText}`);
       }
       await fetchDishes();
-      setShowEditModal(false);
+      setShowUpdateModal(false);
+      setShowDayModal(false);
       setSelectedDish(null);
+      setUpdateDishDate("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -119,76 +183,74 @@ const DishOfTheDay = () => {
     }
   };
 
-  const handleDeleteDish = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`${BACKEND}/dish/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to delete dish: ${errorText}`);
-      }
-      await fetchDishes();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const getDishesForDate = (dateStr) => {
+    return dishes.filter((dish) => dish.date.startsWith(dateStr));
+  };
+
+  const getCalendarEvents = () => {
+    const events = [];
+    dishes.forEach((dish) => {
+      const dateStr = dish.date.split("T")[0];
+      const dishName = dish.productFK?.name || "N/A";
+      const productId = typeof dish.productFK === "string" ? dish.productFK : dish.productFK?._id;
+      events.push({
+        id: dish._id,
+        title: dishName,
+        date: dateStr,
+        productId: productId,
+      });
+    });
+    return events;
+  };
+
+  const handleEventClick = async (info) => {
+    const productId = info.event.extendedProps.productId;
+    console.log("Clicked event with productId:", productId);
+    console.log("Products array:", products);
+
+    if (!productId) {
+      console.error("No productId found for this event");
+      return;
+    }
+
+    let product = await fetchProductById(productId);
+
+    if (product) {
+      console.log("Found product:", product);
+      setSelectedProduct(product);
+      setShowViewModal(true);
+    } else {
+      console.error("Product not found for productId:", productId);
+      setError(`Product with ID ${productId} not found.`);
     }
   };
 
-  const openEditModal = (dish) => {
-    setSelectedDish({
-      ...dish,
-      date: dish.date.split("T")[0],
-      productFK: dish.productFK?._id || dish.productFK,
-    });
-    setShowEditModal(true);
-  };
+  const handleSelect = async (info) => {
+    console.log("Selected date:", info.startStr);
+    setSelectedDate(info.startStr);
 
-  const openViewModal = (dish) => {
-    setSelectedDish(dish);
-    setShowViewModal(true);
-  };
-
-  const filtered = dishes.filter(
-    (d) =>
-      d.statut.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.productFK?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.productFK?.recipeFK?.nom
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentDishes = filtered.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-
-  const getPopularProductName = () => {
-    const count = {};
-    dishes.forEach((d) => {
-      const productName = d.productFK?.name;
-      if (productName) {
-        count[productName] = (count[productName] || 0) + 1;
-      }
-    });
-
-    let max = 0;
-    let popular = "N/A";
-    for (const name in count) {
-      if (count[name] > max) {
-        max = count[name];
-        popular = name;
+    const dishesForDate = getDishesForDate(info.startStr);
+    for (const dish of dishesForDate) {
+      const productId = typeof dish.productFK === "string" ? dish.productFK : dish.productFK?._id;
+      if (productId && !products.find((p) => p._id === productId)) {
+        await fetchProductById(productId);
       }
     }
-    return popular;
+
+    setShowDayModal(true);
   };
 
-  // Helper to build full image/video URL from relative path
-  const getMediaUrl = (media) =>
-    media
-      ? BACKEND + (media.startsWith("/") ? media : `/${media}`)
-      : "https://via.placeholder.com/100?text=Image+Not+Found";
+  const handleAddButtonClick = () => {
+    setSelectedDate(null);
+    setShowAddModal(true);
+  };
+
+  const getPhotoUrl = (photo) =>
+    photo
+      ? photo.startsWith("http")
+        ? photo
+        : BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
+      : "https://placehold.co/150x150";
 
   return (
     <div className="container-fluid p-4">
@@ -198,126 +260,218 @@ const DishOfTheDay = () => {
             <h5>Dish of the Day</h5>
             <Button
               style={{ backgroundColor: "#28A745", borderColor: "#28A745" }}
-              onClick={() => setShowAddModal(true)}
+              onClick={handleAddButtonClick}
             >
-              <Plus /> Add
+              <Plus /> Add Dish
             </Button>
-            <div className="text-muted">
-              Popular product: <strong>{getPopularProductName()}</strong>
-            </div>
-          </div>
-          <div className="d-flex gap-2">
-            <FormControl
-              placeholder="Search..."
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
           </div>
         </Card.Header>
         <Card.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           {loading ? (
             <Spinner animation="border" />
-          ) : currentDishes.length === 0 ? (
-            <p>No dishes available.</p>
           ) : (
-            <>
-              <Table bordered hover>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Product</th>
-                    <th>Recipe Name</th>
-                    <th>Preparation Time (min)</th>
-                    <th>Cooking Time (min)</th>
-                    <th>Category</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentDishes.map((dish) => (
-                    <tr key={dish._id}>
-                      <td>{new Date(dish.date).toLocaleDateString()}</td>
-                      <td>{dish.statut}</td>
-                      <td>{dish.productFK?.name || "N/A"}</td>
-                      <td>{dish.productFK?.recipeFK?.nom || "N/A"}</td>
-                      <td>
-                        {dish.productFK?.recipeFK?.temps_preparation || "N/A"}
-                      </td>
-                      <td>
-                        {dish.productFK?.recipeFK?.temps_cuisson || "N/A"}
-                      </td>
-                      <td>{dish.productFK?.categoryFK?.libelle || "N/A"}</td>
-                      <td>
-                        <Button
-                          size="sm"
-                          style={{
-                            backgroundColor: "#007BFF",
-                            borderColor: "#007BFF",
-                          }}
-                          onClick={() => openViewModal(dish)}
-                        >
-                          <Eye />
-                        </Button>
-                        <Button
-                          size="sm"
-                          style={{
-                            backgroundColor: "#FFD600",
-                            borderColor: "#FFD600",
-                          }}
-                          className="ms-2"
-                          onClick={() => openEditModal(dish)}
-                        >
-                          <Pencil />
-                        </Button>
-                        <Button
-                          size="sm"
-                          style={{
-                            backgroundColor: "#FF0000",
-                            borderColor: "#FF0000",
-                          }}
-                          className="ms-2"
-                          onClick={() => handleDeleteDish(dish._id)}
-                        >
-                          <Trash />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-              <Pagination className="justify-content-center">
-                {[...Array(totalPages)].map((_, i) => (
-                  <Pagination.Item
-                    key={i + 1}
-                    active={i + 1 === currentPage}
-                    onClick={() => setCurrentPage(i + 1)}
-                  >
-                    {i + 1}
-                  </Pagination.Item>
-                ))}
-              </Pagination>
-            </>
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              events={getCalendarEvents()}
+              eventClick={handleEventClick}
+              select={handleSelect}
+              selectable={true}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,dayGridWeek,dayGridDay",
+              }}
+              eventContent={(eventInfo) => (
+                <div
+                  style={{
+                    backgroundColor: "#e0f7fa",
+                    padding: "2px 5px",
+                    borderRadius: "3px",
+                    fontSize: "12px",
+                    whiteSpace: "normal",
+                    wordWrap: "break-word",
+                    cursor: "pointer",
+                    color: "black",
+                  }}
+                >
+                  {eventInfo.event.title}
+                </div>
+              )}
+            />
           )}
         </Card.Body>
       </Card>
 
-      {/* Add Modal */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Dish</Modal.Title>
+      <Modal show={showDayModal} onHide={() => setShowDayModal(false)} size="lg">
+        <Modal.Header closeButton className="bg-primary text-white">
+          <Modal.Title>Dishes for {selectedDate}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {selectedDate && getDishesForDate(selectedDate).length > 0 ? (
+            <Row>
+              {getDishesForDate(selectedDate).map((dish) => {
+                const product = products.find(
+                  (p) =>
+                    p._id ===
+                    (typeof dish.productFK === "string"
+                      ? dish.productFK
+                      : dish.productFK?._id)
+                );
+                return (
+                  <Col key={dish._id} md={4} className="mb-4">
+                    <Card className="shadow-sm h-100">
+                      <Card.Img
+                        variant="top"
+                        src={
+                          product?.photo
+                            ? getPhotoUrl(product.photo)
+                            : "https://placehold.co/150x150"
+                        }
+                        alt={product?.name || "Product Photo"}
+                        style={{ height: "150px", objectFit: "cover" }}
+                        onError={(e) =>
+                          (e.target.src = "https://placehold.co/150x150")
+                        }
+                      />
+                      <Card.Body>
+                        <Card.Title className="text-center">
+                          {product?.name || "N/A"}
+                        </Card.Title>
+                        <div className="d-flex justify-content-center gap-2 mt-3">
+                          <Button
+                            variant="info"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setShowViewModal(true);
+                            }}
+                          >
+                            <Eye /> View
+                          </Button>
+                          <Button
+                            variant="warning"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedDish(dish);
+                              setUpdateDishDate(selectedDate);
+                              setShowUpdateModal(true);
+                            }}
+                          >
+                            <Pencil /> Update
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleDeleteDish(dish._id)}
+                          >
+                            <Trash /> Delete
+                          </Button>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          ) : (
+            <Alert variant="info">No dishes for this day.</Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDayModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal
+        show={showUpdateModal}
+        onHide={() => setShowUpdateModal(false)}
+      >
+        <Modal.Header closeButton className="bg-warning text-white">
+          <Modal.Title>Update Dish Date</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>New Date</Form.Label>
+              <Form.Control
+                type="date"
+                value={updateDishDate}
+                onChange={(e) => setUpdateDishDate(e.target.value)}
+                required
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowUpdateModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleUpdateDish}
+            disabled={loading}
+          >
+            {loading ? <Spinner animation="border" size="sm" /> : "Update"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {selectedDate
+              ? `Dishes for ${selectedDate} (Add New Dish)`
+              : "Add Dish"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedDate && (
+            <>
+              <h6>Existing Dishes:</h6>
+              <Table bordered hover>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedDate &&
+                    getDishesForDate(selectedDate).map((dish) => (
+                      <tr key={dish._id}>
+                        <td>{dish.productFK?.name || "N/A"}</td>
+                        <td>{dish.statut}</td>
+                      </tr>
+                    ))}
+                  {selectedDate &&
+                    getDishesForDate(selectedDate).length === 0 && (
+                      <tr>
+                        <td colSpan="2">No dishes for this day.</td>
+                      </tr>
+                    )}
+                </tbody>
+              </Table>
+            </>
+          )}
+          <h6 className="mt-4">{selectedDate ? "Add New Dish:" : ""}</h6>
           <Form>
             <Form.Group className="mb-3">
               <Form.Label>Date</Form.Label>
               <Form.Control
                 type="date"
-                value={newDish.date}
+                value={selectedDate || newDish.date}
                 onChange={(e) =>
                   setNewDish({ ...newDish, date: e.target.value })
                 }
                 required
+                disabled={!!selectedDate}
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -334,22 +488,43 @@ const DishOfTheDay = () => {
               </Form.Control>
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Product</Form.Label>
-              <Form.Select
-                value={newDish.productFK}
-                onChange={(e) =>
-                  setNewDish({ ...newDish, productFK: e.target.value })
-                }
-                required
-              >
-                <option value="">Select product</option>
-                {products.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Form.Select>
+              <Form.Check
+                type="switch"
+                label="Add Random Dishes"
+                checked={isRandomAdd}
+                onChange={(e) => setIsRandomAdd(e.target.checked)}
+              />
             </Form.Group>
+            {isRandomAdd ? (
+              <Form.Group className="mb-3">
+                <Form.Label>Number of Dishes</Form.Label>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  value={randomDishCount}
+                  onChange={(e) => setRandomDishCount(e.target.value)}
+                  required
+                />
+              </Form.Group>
+            ) : (
+              <Form.Group className="mb-3">
+                <Form.Label>Product</Form.Label>
+                <Form.Select
+                  value={newDish.productFK}
+                  onChange={(e) =>
+                    setNewDish({ ...newDish, productFK: e.target.value })
+                  }
+                  required
+                >
+                  <option value="">Select product</option>
+                  {products.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -362,234 +537,134 @@ const DishOfTheDay = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Edit Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Dish</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedDish && (
-            <Form>
-              <Form.Group className="mb-3">
-                <Form.Label>Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={selectedDish.date}
-                  onChange={(e) =>
-                    setSelectedDish({ ...selectedDish, date: e.target.value })
-                  }
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Status</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={selectedDish.statut}
-                  onChange={(e) =>
-                    setSelectedDish({
-                      ...selectedDish,
-                      statut: e.target.value,
-                    })
-                  }
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </Form.Control>
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Product</Form.Label>
-                <Form.Select
-                  value={selectedDish.productFK}
-                  onChange={(e) =>
-                    setSelectedDish({
-                      ...selectedDish,
-                      productFK: e.target.value,
-                    })
-                  }
-                  required
-                >
-                  <option value="">Select product</option>
-                  {products.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Form>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleUpdateDish}
-            disabled={loading}
-          >
-            {loading ? <Spinner animation="border" size="sm" /> : "Save"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* View Modal */}
       <Modal
         show={showViewModal}
         onHide={() => setShowViewModal(false)}
-        size="lg"
+        size="md"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>View Dish Details</Modal.Title>
+        <Modal.Header closeButton className="bg-info text-white">
+          <Modal.Title>Product Details</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {selectedDish && (
-            <div>
-              <h5>Basic Information</h5>
-              <p>
-                <strong>Date:</strong>{" "}
-                {new Date(selectedDish.date).toLocaleDateString()}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedDish.statut}
-              </p>
-              <p>
-                <strong>Product:</strong>{" "}
-                {selectedDish.productFK?.name || "N/A"}
-              </p>
-              <p>
-                <strong>Category:</strong>{" "}
-                {selectedDish.productFK?.categoryFK?.libelle || "N/A"}
-              </p>
-
-              {selectedDish.productFK?.recipeFK && (
-                <>
-                  <h5 className="mt-4">Recipe Details</h5>
-                  <p>
-                    <strong>Recipe Name:</strong>{" "}
-                    {selectedDish.productFK.recipeFK.nom || "N/A"}
-                  </p>
-                  <p>
-                    <strong>Preparation Time:</strong>{" "}
-                    {selectedDish.productFK.recipeFK.temps_preparation || "N/A"}{" "}
-                    minutes
-                  </p>
-                  <p>
-                    <strong>Cooking Time:</strong>{" "}
-                    {selectedDish.productFK.recipeFK.temps_cuisson || "N/A"}{" "}
-                    minutes
-                  </p>
-
-                  <h6 className="mt-3">Ingredients</h6>
-                  {selectedDish.productFK.recipeFK.ingredientsGroup &&
-                  selectedDish.productFK.recipeFK.ingredientsGroup.length >
-                    0 ? (
-                    selectedDish.productFK.recipeFK.ingredientsGroup.map(
-                      (group, index) => (
-                        <div key={index} className="mb-3">
-                          <h6>{group.title || "Group " + (index + 1)}</h6>
-                          <ul>
-                            {group.items.map((item, idx) => (
-                              <li key={idx}>
-                                {item.ingredient?.libelle ||
-                                  "Unknown Ingredient"}
-                                : {item.customQuantity || "N/A"}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )
-                    )
-                  ) : (
-                    <p>No ingredients available.</p>
-                  )}
-
-                  <h6 className="mt-3">Steps</h6>
-                  {selectedDish.productFK.recipeFK.steps &&
-                  selectedDish.productFK.recipeFK.steps.length > 0 ? (
-                    <ol>
-                      {selectedDish.productFK.recipeFK.steps.map(
-                        (step, idx) => (
-                          <li key={idx}>
-                            <strong>{step.title || "Step " + (idx + 1)}</strong>
-                            : {step.description || "N/A"}
-                          </li>
-                        )
-                      )}
-                    </ol>
-                  ) : (
-                    <p>No steps available.</p>
-                  )}
-
-                  <h6 className="mt-3">Utensils</h6>
-                  {selectedDish.productFK.recipeFK.utensils &&
-                  selectedDish.productFK.recipeFK.utensils.length > 0 ? (
-                    <ul>
-                      {selectedDish.productFK.recipeFK.utensils.map(
-                        (utensil, idx) => (
-                          <li key={idx}>
-                            {utensil.libelle || "Unknown Utensil"} (Quantity:{" "}
-                            {utensil.quantity || "N/A"}, Disponibility:{" "}
-                            {utensil.disponibility
-                              ? "Available"
-                              : "Not Available"}
-                            )
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  ) : (
-                    <p>No utensils required.</p>
-                  )}
-
-                  <h6 className="mt-3">Images</h6>
-                  {selectedDish.productFK.recipeFK.images &&
-                  selectedDish.productFK.recipeFK.images.length > 0 ? (
-                    <div className="d-flex flex-wrap gap-2">
-                      {selectedDish.productFK.recipeFK.images.map(
-                        (image, idx) => (
-                          <img
-                            key={idx}
-                            src={getMediaUrl(image)}
-                            alt={`Recipe Image ${idx + 1}`}
-                            style={{
-                              width: "100px",
-                              height: "100px",
-                              objectFit: "cover",
-                            }}
-                            onError={(e) =>
-                              (e.target.src =
-                                "https://via.placeholder.com/100?text=Image+Not+Found")
-                            }
-                          />
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <p>No images available.</p>
-                  )}
-
-                  <h6 className="mt-3">Video</h6>
-                  {selectedDish.productFK.recipeFK.video ? (
-                    <video
-                      src={getMediaUrl(selectedDish.productFK.recipeFK.video)}
-                      controls
-                      style={{ maxWidth: "100%" }}
-                      onError={(e) =>
-                        (e.target.nextSibling.style.display = "block")
-                      }
-                    />
-                  ) : (
-                    <p>No video available.</p>
-                  )}
-                </>
+        <Modal.Body className="p-4">
+          {selectedProduct ? (
+            <Card className="shadow-sm border-0">
+              {selectedProduct.photo ? (
+                <Card.Img
+                  variant="top"
+                  src={getPhotoUrl(selectedProduct.photo)}
+                  alt={selectedProduct.name || "Product Photo"}
+                  style={{
+                    height: "250px",
+                    objectFit: "cover",
+                    borderTopLeftRadius: "0.375rem",
+                    borderTopRightRadius: "0.375rem",
+                  }}
+                  onError={(e) =>
+                    (e.target.src = "https://placehold.co/250x250")
+                  }
+                />
+              ) : (
+                <Card.Img
+                  variant="top"
+                  src="https://placehold.co/250x250"
+                  alt="No photo available"
+                  style={{
+                    height: "250px",
+                    objectFit: "cover",
+                    borderTopLeftRadius: "0.375rem",
+                    borderTopRightRadius: "0.375rem",
+                  }}
+                />
               )}
-            </div>
+              <Card.Body>
+                <Card.Title className="text-center mb-4">
+                  {selectedProduct.name || "N/A"}
+                </Card.Title>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Price:
+                  </Col>
+                  <Col xs={8}>
+                    <Badge bg="success" className="fs-6">
+                      ${selectedProduct.price?.toFixed(2) ?? "N/A"}
+                    </Badge>
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Description:
+                  </Col>
+                  <Col xs={8}>{selectedProduct.description || "N/A"}</Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Promotion:
+                  </Col>
+                  <Col xs={8}>
+                    {selectedProduct.promotion ? (
+                      <Badge bg="warning" text="dark">
+                        {selectedProduct.promotion}
+                      </Badge>
+                    ) : (
+                      "N/A"
+                    )}
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Availability:
+                  </Col>
+                  <Col xs={8}>
+                    <Badge
+                      bg={selectedProduct.disponibility ? "success" : "danger"}
+                    >
+                      {selectedProduct.disponibility ? "Yes" : "No"}
+                    </Badge>
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Duration:
+                  </Col>
+                  <Col xs={8}>{selectedProduct.duration || "N/A"}</Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Category:
+                  </Col>
+                  <Col xs={8}>
+                    {selectedProduct.categoryFK?.libelle || "No category"}
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Type of Dish:
+                  </Col>
+                  <Col xs={8}>{selectedProduct.typePlat || "N/A"}</Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={4} className="fw-bold">
+                    Archived:
+                  </Col>
+                  <Col xs={8}>
+                    <Badge
+                      bg={selectedProduct.archived ? "secondary" : "primary"}
+                    >
+                      {selectedProduct.archived ? "Yes" : "No"}
+                    </Badge>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Alert variant="warning">No product data available.</Alert>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowViewModal(false)}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowViewModal(false)}
+          >
             Close
           </Button>
         </Modal.Footer>
