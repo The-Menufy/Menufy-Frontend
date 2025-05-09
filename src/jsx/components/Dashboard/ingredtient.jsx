@@ -49,7 +49,6 @@ const Ingredient = () => {
     price: 0,
     disponibility: true,
     qtMax: 0,
-    photo: null,
   });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoEditFile, setPhotoEditFile] = useState(null);
@@ -99,7 +98,6 @@ const Ingredient = () => {
         price: 0,
         disponibility: true,
         qtMax: 0,
-        photo: null,
       });
       setPhotoFile(null);
     } catch (err) {
@@ -162,6 +160,8 @@ const Ingredient = () => {
       });
       if (!res.ok) throw new Error("Erreur d'archivage");
       await loadIngredients();
+      const totalPages = Math.ceil(filteredIngredients.length / itemsPerPage);
+      if (currentPage > totalPages) setCurrentPage(totalPages || 1);
     } catch (err) {
       alert("Erreur : " + err.message);
     }
@@ -176,6 +176,8 @@ const Ingredient = () => {
       });
       if (!res.ok) throw new Error("Erreur de restauration");
       await loadIngredients();
+      const totalPages = Math.ceil(filteredIngredients.length / itemsPerPage);
+      if (currentPage > totalPages) setCurrentPage(totalPages || 1);
     } catch (err) {
       alert("Erreur : " + err.message);
     }
@@ -238,9 +240,7 @@ const Ingredient = () => {
   };
 
   const getPhotoUrl = (photo) =>
-    photo
-      ? BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
-      : "https://via.placeholder.com/60";
+    photo || "https://via.placeholder.com/60";
 
   const filteredIngredients = ingredients
     .filter((i) => {
@@ -381,7 +381,7 @@ const Ingredient = () => {
             <div className="text-danger m-5">Error: {error}</div>
           ) : filteredIngredients.length === 0 ? (
             <p>
-              No ingredients match your search. Click &quot;Add Ingredient&quot;
+              No ingredients match your search. Click "Add Ingredient"
               to create one.
             </p>
           ) : (
@@ -486,7 +486,7 @@ const Ingredient = () => {
                           }}
                           className="ms-2"
                           onClick={() => {
-                            setSelectedIngredient({ ...i, photo: null });
+                            setSelectedIngredient(i);
                             setShowEditModal(true);
                           }}
                         >
@@ -749,6 +749,9 @@ const Ingredient = () => {
                         height: "100px",
                         objectFit: "cover",
                       }}
+                      onError={(e) =>
+                        (e.target.src = "https://via.placeholder.com/100")
+                      }
                     />
                   </div>
                 )}

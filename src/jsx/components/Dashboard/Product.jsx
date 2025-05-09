@@ -32,10 +32,8 @@ const Product = () => {
   const [showArchived, setShowArchived] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [showCostModal, setShowCostModal] = useState(false);
   const [showNutritionModal, setShowNutritionModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [costResult, setCostResult] = useState(null);
   const [nutritionResult, setNutritionResult] = useState(null);
   const [selectedProductName, setSelectedProductName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,6 +91,8 @@ const Product = () => {
         promotion: selectedProduct.promotion,
         disponibility: selectedProduct.disponibility,
         duration: selectedProduct.duration,
+        typePlat: selectedProduct.typePlat,
+        archived: selectedProduct.archived,
       };
       Object.entries(fields).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -103,7 +103,7 @@ const Product = () => {
         "categoryFK",
         selectedProduct.categoryFK?._id || selectedProduct.categoryFK
       );
-      if (selectedProduct.photo && typeof selectedProduct.photo !== "string") {
+      if (selectedProduct.photo instanceof File) {
         formData.append("photo", selectedProduct.photo);
       }
 
@@ -193,8 +193,6 @@ const Product = () => {
       Carotte: "carrot",
       "Fromage blanc": "cottage cheese",
     };
-
-    // Normalisation du texte avant recherche
     const normalized = name.trim().toLowerCase();
     const found = Object.entries(translations).find(
       ([fr]) => fr.toLowerCase() === normalized
@@ -204,49 +202,35 @@ const Product = () => {
 
   const handleAnalyzeNutrition = async (product) => {
     try {
-      if (!product.recipeFK) {
-        alert("Ce produit n'a pas de recette associée !");
+      if (!product.recipeFK || !product.recipeFK._id) {
+        alert("Ce produit n'a pas de recette associée ou l'ID est manquant !");
         return;
       }
 
-      const res = await fetch(`${BACKEND}/api/recipe/${product.recipeFK._id}`);
+      const res = await fetch(`${BACKEND}/recipe/${product.recipeFK._id}`);
       if (!res.ok) throw new Error("Échec de récupération de la recette");
       const recipe = await res.json();
 
       const ingredientsList = [];
-
       recipe.ingredientsGroup.forEach((group) => {
         group.items.forEach((item) => {
           if (item.ingredient && item.customQuantity) {
             let ingredientName = "";
-
-            // Cas 1 : Objet avec libelle ou name
             if (
               typeof item.ingredient === "object" &&
               (item.ingredient.libelle || item.ingredient.name)
             ) {
               ingredientName = item.ingredient.libelle || item.ingredient.name;
-            }
-            // Cas 2 : ID ou string
-            else {
+            } else {
               const foundIngredient = ingredients.find(
                 (ing) =>
                   ing._id === item.ingredient ||
                   ing._id === item.ingredient?._id
               );
-              if (foundIngredient) {
-                ingredientName =
-                  foundIngredient.libelle || foundIngredient.name || "";
-              } else if (typeof item.ingredient === "string") {
-                ingredientName = item.ingredient;
-              }
+              ingredientName =
+                foundIngredient?.libelle || foundIngredient?.name || "";
             }
-
-            // Traduction en anglais
-            const translatedName = translateIngredientToEnglish(
-              ingredientName.trim()
-            );
-
+            const translatedName = translateIngredientToEnglish(ingredientName);
             if (translatedName !== "Unknown") {
               ingredientsList.push(`${translatedName} ${item.customQuantity}`);
             }
@@ -255,29 +239,17 @@ const Product = () => {
       });
 
       if (ingredientsList.length === 0) {
-        console.warn(
-          "⚠️ Aucun ingrédient valide pour l'analyse nutritionnelle !"
-        );
         alert("Aucun ingrédient valide pour l'analyse nutritionnelle !");
         return;
       }
 
-      console.log(
-        "🧪 Ingredients envoyés pour nutrition analysis :",
-        ingredientsList
-      );
-
-      const nutritionRes = await fetch(`${BACKEND}/api/nutrition/analyze`, {
+      const nutritionRes = await fetch(`${BACKEND}/nutrition/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients: ingredientsList }),
       });
 
-      if (!nutritionRes.ok) {
-        const errorText = await nutritionRes.text();
-        throw new Error(errorText);
-      }
-
+      if (!nutritionRes.ok) throw new Error(await nutritionRes.text());
       const result = await nutritionRes.json();
       setNutritionResult(result);
       setSelectedProductName(product.name);
@@ -345,9 +317,7 @@ const Product = () => {
   };
 
   const getPhotoUrl = (photo) =>
-    photo
-      ? BACKEND + (photo.startsWith("/") ? photo : `/${photo}`)
-      : "https://via.placeholder.com/50";
+    photo || "https://via.placeholder.com/50"; // Use Cloudinary URL directly
 
   const filteredProducts = products
     .filter((p) => {
@@ -508,12 +478,7 @@ const Product = () => {
             </p>
           ) : (
             <>
-              <Table
-                responsive
-                bordered
-                hover
-                className="align-middle shadow-sm"
-              >
+              <Table responsive bordered hover className="align-middle shadow-sm">
                 <thead className="table-light">
                   <tr>
                     <th>Photo</th>
@@ -583,7 +548,7 @@ const Product = () => {
                       <td className="fw-semibold">{prod.name || "N/A"}</td>
                       <td>${prod.price?.toFixed(2) ?? "N/A"}</td>
                       <td>{prod.typePlat || "N/A"}</td>
-                      <td>{prod.disponibility ? "Yes" : "No"}</td>
+                      <td>{prod.description || "N/A"}</td>
                       <td>{prod.categoryFK?.libelle || "No category"}</td>
                       <td>
                         <span
@@ -600,7 +565,7 @@ const Product = () => {
                             size="sm"
                             variant="info"
                             as={Link}
-                            to={`/Recipe/${prod.recipeFK._id}`}
+                            to={`/recipe/${prod.recipeFK._id}`}
                           >
                             View Recipe
                           </Button>
@@ -710,7 +675,7 @@ const Product = () => {
                 <strong>Name:</strong> {selectedProduct.name || "N/A"}
               </p>
               <p>
-                <strong>Price:</strong> {selectedProduct.price ?? "N/A"}
+                <strong>Price:</strong> ${selectedProduct.price?.toFixed(2) ?? "N/A"}
               </p>
               <p>
                 <strong>Description:</strong>{" "}
@@ -729,6 +694,9 @@ const Product = () => {
               <p>
                 <strong>Category:</strong>{" "}
                 {selectedProduct.categoryFK?.libelle || "No category"}
+              </p>
+              <p>
+                <strong>Type of Dish:</strong> {selectedProduct.typePlat || "N/A"}
               </p>
               <p>
                 <strong>Archived:</strong>{" "}
@@ -779,6 +747,9 @@ const Product = () => {
                           height: "100px",
                           objectFit: "cover",
                         }}
+                        onError={(e) =>
+                          (e.target.src = "https://via.placeholder.com/100")
+                        }
                       />
                     </div>
                   )}
@@ -797,9 +768,9 @@ const Product = () => {
                 <Form.Label>Price</Form.Label>
                 <Form.Control
                   type="number"
-                  min="0"
+                  min="0.01"
                   step="0.01"
-                  value={selectedProduct.price ?? 0}
+                  value={selectedProduct.price ?? ""}
                   onChange={(e) =>
                     setSelectedProduct({
                       ...selectedProduct,
@@ -845,6 +816,7 @@ const Product = () => {
                       disponibility: e.target.value === "true",
                     })
                   }
+                  required
                 >
                   <option value="true">Yes</option>
                   <option value="false">No</option>
@@ -862,6 +834,26 @@ const Product = () => {
                     })
                   }
                 />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Type of Dish</Form.Label>
+                <Form.Select
+                  value={selectedProduct.typePlat || ""}
+                  onChange={(e) =>
+                    setSelectedProduct({
+                      ...selectedProduct,
+                      typePlat: e.target.value,
+                    })
+                  }
+                  required
+                >
+                  <option value="">Select type</option>
+                  <option value="vegetarian">Vegetarian</option>
+                  <option value="vegan">Vegan</option>
+                  <option value="gluten-free">Gluten-Free</option>
+                  <option value="dairy-free">Dairy-Free</option>
+                  <option value="non-vegetarian">Non-Vegetarian</option>
+                </Form.Select>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Category</Form.Label>
@@ -901,27 +893,6 @@ const Product = () => {
             </Form>
           )}
         </Modal.Body>
-      </Modal>
-
-      {/* Cost Modal */}
-      <Modal show={showCostModal} onHide={() => setShowCostModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Recipe Cost for {costResult?.productName}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {costResult ? (
-            <p>
-              <strong>Total Cost:</strong> ${costResult.totalCost}
-            </p>
-          ) : (
-            <p>No cost data available.</p>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCostModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
       </Modal>
 
       {/* Nutrition Modal */}

@@ -1,0 +1,78 @@
+.media-section {
+  gap: 10px;
+}
+
+.main-media {
+  width: 50%;
+}
+
+.main-media-content {
+  width: 100%;
+  height: 600px;
+  object-fit: cover;
+}
+
+.additional-images {
+  width: 50%;
+  padding-left: 10px;
+}
+
+.additional-image-wrapper {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.additional-image {
+  width: 50%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.section-title {
+  color: #FF5733;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.ingredient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.ingredient-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ingredient-image img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.placeholder-image {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.prep-time-box {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  margin-left: 15px;
+}
+
+.prep-time-item {
+  margin-right: 10px;
+}

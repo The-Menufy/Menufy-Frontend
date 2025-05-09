@@ -32,6 +32,8 @@ import ManageVariants from "./components/Dashboard/ManageVariants";
  import RecommendationComponent from "./components/Dashboard/Recommendation";
  import ClassificationComponent from "./components/Dashboard/Classification";
  import RegressionComponent from "./components/Dashboard/Regression";
+import AiPanel from "./components/Dashboard/AIPanel";
+import Stock from "./components/Dashboard/Stock";
 import Clustering from "./components/Dashboard/Clustering";
 //CMS
 import Content from "./components/Cms/Content";
@@ -184,8 +186,9 @@ const Markup = () => {
     { url: "classification", component: <ClassificationComponent /> },  // Route for Classification
  		{ url: "regression", component: <RegressionComponent /> },  // Route for Regression
  		{ url: "recommendation", component: <RecommendationComponent /> },
-     { url: "clustering", component: <Clustering /> },
-
+    {url:"AiPanel",component:<AiPanel/>},
+    {url:"Stock",component:<Stock/>},
+{ url: "clustering", component: <Clustering /> },
     //Cms
     { url: "content", component: <Content /> },
     { url: "menu", component: <Menu /> },
@@ -317,6 +320,7 @@ const Markup = () => {
         <Route element={<UserLayout />}>
           <Route path="/homepage" element={<HomePage />} />
           <Route path="/MenuPage" element={<MenuPage />} />
+          
           {/* You can add more public routes here if you want them to use UserLayout */}
           {/* <Route path="/about" element={<AboutPage />} /> */}
         </Route>
