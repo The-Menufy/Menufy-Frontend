@@ -643,7 +643,7 @@ const Product = () => {
               >
                 <Button
                   className="btn-custom btn-add"
-                  onClick={() => navigate("/add-product")}
+                  onClick={() => navigate("/add-recipe")}
                 >
                   <span className="fw-semibold">➕ Add Product & Recipe</span>
                 </Button>
