@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   Table,
@@ -22,7 +22,7 @@ import {
 } from "react-bootstrap-icons";
 import { Link, useNavigate } from "react-router-dom";
 
-// Use Vite env variable for backend URL
+// Use Vite env variable for backend URL, strip trailing /api if present for bare endpoint
 const BACKEND =
   import.meta.env.VITE_BACKEND_URL?.replace(/\/api\/?$/, "") || "";
 
@@ -40,16 +40,18 @@ const Product = () => {
   const [selectedProductName, setSelectedProductName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [listening, setListening] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "name",
+    direction: "asc",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const itemsPerPage = 5;
   const navigate = useNavigate();
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = async () => {
     try {
       setLoading(true);
-      setError(null);
       const [productRes, ingredientRes, categoryRes] = await Promise.all([
         fetch(`${BACKEND}/product`),
         fetch(`${BACKEND}/ingredient`),
@@ -60,35 +62,29 @@ const Product = () => {
       if (!ingredientRes.ok) throw new Error("Failed to fetch ingredients");
       if (!categoryRes.ok) throw new Error("Failed to fetch categories");
 
-      const [productData, ingredientData, categoryData] = await Promise.all([
-        productRes.json(),
-        ingredientRes.json(),
-        categoryRes.json(),
-      ]);
+      const productData = await productRes.json();
+      const ingredientData = await ingredientRes.json();
+      const categoryData = await categoryRes.json();
 
       setProducts(productData);
       setIngredients(ingredientData);
       setCategoryOptions(categoryData);
+      setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchProducts();
-
-    // Cleanup for speech recognition
-    return () => {
-      setListening(false);
-    };
-  }, [fetchProducts]);
+    // eslint-disable-next-line
+  }, []);
 
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
       const formData = new FormData();
       const fields = {
         name: selectedProduct.name,
@@ -123,16 +119,14 @@ const Product = () => {
       setShowEditModal(false);
       setSelectedProduct(null);
     } catch (err) {
-      setError("Error updating product: " + err.message);
-    } finally {
-      setLoading(false);
+      alert("Error updating product: " + err.message);
     }
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
     try {
-      setLoading(true);
       const res = await fetch(`${BACKEND}/product/${id}`, {
         method: "DELETE",
       });
@@ -141,16 +135,13 @@ const Product = () => {
       const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
       if (currentPage > totalPages) setCurrentPage(totalPages || 1);
     } catch (err) {
-      setError("Error deleting product: " + err.message);
-    } finally {
-      setLoading(false);
+      alert("Error deleting product: " + err.message);
     }
   };
 
   const handleArchiveProduct = async (id) => {
     if (!window.confirm("Voulez-vous archiver ce produit ?")) return;
     try {
-      setLoading(true);
       const res = await fetch(`${BACKEND}/product/${id}/archive`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -158,16 +149,13 @@ const Product = () => {
       if (!res.ok) throw new Error("Erreur d'archivage");
       await fetchProducts();
     } catch (err) {
-      setError("Erreur : " + err.message);
-    } finally {
-      setLoading(false);
+      alert("Erreur : " + err.message);
     }
   };
 
   const handleRestoreProduct = async (id) => {
     if (!window.confirm("Voulez-vous restaurer ce produit ?")) return;
     try {
-      setLoading(true);
       const res = await fetch(`${BACKEND}/product/${id}/restore`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -175,9 +163,7 @@ const Product = () => {
       if (!res.ok) throw new Error("Erreur de restauration");
       await fetchProducts();
     } catch (err) {
-      setError("Erreur : " + err.message);
-    } finally {
-      setLoading(false);
+      alert("Erreur : " + err.message);
     }
   };
 
@@ -218,9 +204,8 @@ const Product = () => {
 
   const handleAnalyzeNutrition = async (product) => {
     try {
-      setLoading(true);
       if (!product.recipeFK || !product.recipeFK._id) {
-        setError("Ce produit n'a pas de recette associée ou l'ID est manquant !");
+        alert("Ce produit n'a pas de recette associée ou l'ID est manquant !");
         return;
       }
 
@@ -256,7 +241,7 @@ const Product = () => {
       });
 
       if (ingredientsList.length === 0) {
-        setError("Aucun ingrédient valide pour l'analyse nutritionnelle !");
+        alert("Aucun ingrédient valide pour l'analyse nutritionnelle !");
         return;
       }
 
@@ -272,9 +257,8 @@ const Product = () => {
       setSelectedProductName(product.name);
       setShowNutritionModal(true);
     } catch (err) {
-      setError("Erreur lors de l'analyse nutritionnelle : " + err.message);
-    } finally {
-      setLoading(false);
+      console.error("Erreur analyse nutrition:", err.message);
+      alert("Erreur lors de l'analyse nutritionnelle : " + err.message);
     }
   };
 
@@ -287,7 +271,9 @@ const Product = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setError("La reconnaissance vocale n'est pas supportée par votre navigateur.");
+      alert(
+        "La reconnaissance vocale n'est pas supportée par votre navigateur."
+      );
       return;
     }
 
@@ -309,7 +295,7 @@ const Product = () => {
     };
 
     recognition.onerror = (event) => {
-      setError("Erreur de reconnaissance vocale : " + event.error);
+      console.error("Erreur de reconnaissance vocale :", event.error);
       setListening(false);
     };
 
@@ -332,15 +318,14 @@ const Product = () => {
     return sortConfig.direction === "asc" ? <ArrowUp /> : <ArrowDown />;
   };
 
-  const getPhotoUrl = (photo) => {
-    return photo && photo.startsWith("https://")
-      ? photo
-      : "https://via.placeholder.com/50";
-  };
+  const getPhotoUrl = (photo) =>
+    photo || "https://via.placeholder.com/50"; // Use Cloudinary URL directly
 
   const filteredProducts = products
     .filter((p) => {
-      const matchSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchSearch = p.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
       const matchArchived = showArchived ? p.archived : !p.archived;
       return matchSearch && matchArchived;
     })
@@ -423,7 +408,6 @@ const Product = () => {
       --danger-color: #DC3545;
       --warning-color: #FFC107;
       --info-color: #17A2B8;
-      --ai-color: #EA7A9A;
       --light-gray: #F8F9FA;
       --dark-gray: #343A40;
       --border-radius: 8px;
@@ -489,12 +473,6 @@ const Product = () => {
     .btn-add {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
-    }
-
-    .btn-ai {
-      background-color: var(--ai-color);
-      border-color: var(--ai-color);
-      color: #fff;
     }
 
     .btn-cost {
@@ -663,39 +641,54 @@ const Product = () => {
                 placement="top"
                 overlay={<Tooltip>Add a new product & recipe</Tooltip>}
               >
-                <Button className="btn-custom btn-add" onClick={() => navigate("/add-recipe")}>
+                <Button
+                  className="btn-custom btn-add"
+                  onClick={() => navigate("/add-product")}
+                >
                   <span className="fw-semibold">➕ Add Product & Recipe</span>
                 </Button>
               </OverlayTrigger>
-
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip>Track recipe costs</Tooltip>}
               >
-                <Button className="btn-custom btn-cost" onClick={() => navigate("/RecipeCostDetails")}>
+                <Button
+                  className="btn-custom btn-cost"
+                  onClick={() => navigate("/RecipeCostDetails")}
+                >
                   💸 Track Recipe Costs
                 </Button>
               </OverlayTrigger>
-              <Button
-                variant={!showArchived ? "primary" : "outline-secondary"}
-                className="btn-custom"
-                onClick={() => {
-                  setShowArchived(false);
-                  setCurrentPage(1);
-                }}
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Show active products</Tooltip>}
               >
-                Actives
-              </Button>
-              <Button
-                variant={showArchived ? "primary" : "outline-secondary"}
-                className="btn-custom"
-                onClick={() => {
-                  setShowArchived(true);
-                  setCurrentPage(1);
-                }}
+                <Button
+                  variant={!showArchived ? "primary" : "outline-secondary"}
+                  className="btn-custom"
+                  onClick={() => {
+                    setShowArchived(false);
+                    setCurrentPage(1);
+                  }}
+                >
+                  Actives
+                </Button>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Show archived products</Tooltip>}
               >
-                Archivés
-              </Button>
+                <Button
+                  variant={showArchived ? "primary" : "outline-secondary"}
+                  className="btn-custom"
+                  onClick={() => {
+                    setShowArchived(true);
+                    setCurrentPage(1);
+                  }}
+                >
+                  Archivés
+                </Button>
+              </OverlayTrigger>
             </div>
           </div>
           <div className="d-flex align-items-center w-100 w-md-auto mt-3 mt-md-0">
@@ -850,7 +843,6 @@ const Product = () => {
                                 size="sm"
                                 className="btn-custom btn-restore"
                                 onClick={() => handleRestoreProduct(prod._id)}
-                                disabled={loading}
                               >
                                 🔄
                               </Button>
@@ -864,7 +856,6 @@ const Product = () => {
                                 size="sm"
                                 className="btn-custom btn-archive"
                                 onClick={() => handleArchiveProduct(prod._id)}
-                                disabled={loading}
                               >
                                 🗄️
                               </Button>
@@ -878,7 +869,6 @@ const Product = () => {
                               size="sm"
                               className="btn-custom btn-delete"
                               onClick={() => handleDeleteProduct(prod._id)}
-                              disabled={loading}
                             >
                               <Trash />
                             </Button>
@@ -890,7 +880,7 @@ const Product = () => {
                             <Button
                               size="sm"
                               className={`btn-custom ${prod.recipeFK ? "btn-nutrition" : "btn-secondary"}`}
-                              disabled={!prod.recipeFK || loading}
+                              disabled={!prod.recipeFK}
                               onClick={() => handleAnalyzeNutrition(prod)}
                             >
                               📊
@@ -1154,17 +1144,11 @@ const Product = () => {
                   variant="secondary"
                   className="btn-custom"
                   onClick={() => setShowEditModal(false)}
-                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  variant="primary"
-                  className="btn-custom"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? <Spinner animation="border" size="sm" /> : "Save Changes"}
+                <Button variant="primary" className="btn-custom" type="submit">
+                  Save Changes
                 </Button>
               </Modal.Footer>
             </Form>
@@ -1173,7 +1157,10 @@ const Product = () => {
       </Modal>
 
       {/* Nutrition Modal */}
-      <Modal show={showNutritionModal} onHide={() => setShowNutritionModal(false)}>
+      <Modal
+        show={showNutritionModal}
+        onHide={() => setShowNutritionModal(false)}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Nutrition Facts for {selectedProductName}</Modal.Title>
         </Modal.Header>
