@@ -1,7 +1,7 @@
 # Menufy Frontend
 
 Welcome to the **Menufy-Frontend** repository! This project is the React (Vite) based user interface for The-Menufy platform, dedicated to modernizing restaurant and menu management.
-
+https://menufy-frontend.netlify.app/
 ---
 
 ## 🚀 Tech Stack
