@@ -1,5 +1,5 @@
 # Menufy Frontend
-
+[![Netlify Status](https://api.netlify.com/api/v1/badges/a5c14f32-1cb0-4eb4-a04c-832becff4e21/deploy-status)](https://app.netlify.com/sites/menufy-frontend/deploys)
 Welcome to the **Menufy-Frontend** repository! This project is the React (Vite) based user interface for The-Menufy platform, dedicated to modernizing restaurant and menu management.
 https://menufy-frontend.netlify.app/
 ---
